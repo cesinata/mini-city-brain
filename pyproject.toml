@@ -1,0 +1,28 @@
+[project]
+name = "mini-city-brain"
+version = "0.2.0"
+description = "Replays public Victorian traffic-signal volume data through a queue, object storage, DuckDB and dbt on one laptop."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = [".venv", "transform/target", "dagster_home", ".dagster"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "S", "C4", "SIM"]
+ignore = ["S101"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S105", "S106", "S108", "S603", "S607", "S608"]
+"ingest/**" = ["S311"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]
