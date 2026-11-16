@@ -1,0 +1,4 @@
+# Runtime dependencies for the worker image.
+boto3==1.43.118
+prometheus-client==0.26.0
+pydantic==2.14.1

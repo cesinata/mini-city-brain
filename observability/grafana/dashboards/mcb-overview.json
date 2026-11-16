@@ -1,0 +1,215 @@
+{
+  "uid": "mcb-overview",
+  "title": "mini-city-brain: ingest and pipeline",
+  "tags": [
+    "mini-city-brain"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "5s",
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Ingest rate (readings accepted per second)",
+      "description": "Readings the API accepted and published to the queue.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "mcb-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "mcb-prometheus"
+          },
+          "expr": "sum(rate(mcb_api_readings_accepted_total[1m]))",
+          "legendFormat": ""
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Rejection rate (share of readings rejected)",
+      "description": "Rejected readings divided by all readings seen.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "mcb-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "mcb-prometheus"
+          },
+          "expr": "sum(rate(mcb_api_readings_rejected_total[1m])) / clamp_min(sum(rate(mcb_api_readings_accepted_total[1m])) + sum(rate(mcb_api_readings_rejected_total[1m])), 1e-9)",
+          "legendFormat": ""
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Ingest queue depth (messages waiting)",
+      "description": "Read by the worker from the queue attribute ApproximateNumberOfMessages.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "mcb-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "mcb-prometheus"
+          },
+          "expr": "mcb_worker_ingest_queue_messages",
+          "legendFormat": ""
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Dead-letter queue (messages)",
+      "description": "Anything above zero means a message failed three receives.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "mcb-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "mcb-prometheus"
+          },
+          "expr": "mcb_worker_dead_letter_messages",
+          "legendFormat": ""
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "API p95 latency",
+      "description": "95th percentile request latency over 5 minutes, all routes.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "mcb-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "mcb-prometheus"
+          },
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(mcb_api_request_duration_seconds_bucket[5m])))",
+          "legendFormat": ""
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Time since last pipeline success",
+      "description": "Empty until the pipeline job has written a successful run to ops.pipeline_runs.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "mcb-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "mcb-prometheus"
+          },
+          "expr": "(time() - mcb_pipeline_last_success_timestamp_seconds) * (mcb_pipeline_last_success_timestamp_seconds > 0)",
+          "legendFormat": ""
+        }
+      ]
+    }
+  ]
+}

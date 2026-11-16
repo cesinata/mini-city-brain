@@ -1,0 +1,119 @@
+# Local stack. Everything talks to a local AWS emulator with the dummy credentials test/test.
+# Image tags are pinned. They were not pulled on the build machine (no Docker there); CI does.
+name: mini-city-brain
+
+x-aws-env: &aws-env
+  AWS_ENDPOINT_URL: http://emulator:5000
+  AWS_ACCESS_KEY_ID: test
+  AWS_SECRET_ACCESS_KEY: test
+  AWS_DEFAULT_REGION: ap-southeast-2
+  RAW_BUCKET: mcb-raw-readings
+  CURATED_BUCKET: mcb-curated-exports
+  INGEST_QUEUE_NAME: mcb-ingest
+  DEAD_LETTER_QUEUE_NAME: mcb-ingest-dlq
+
+services:
+  emulator:
+    image: motoserver/moto:5.2.4
+    command: ["-H", "0.0.0.0", "-p", "5000"]
+    ports:
+      - "127.0.0.1:5000:5000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/moto-api/', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # Creates buckets and queues with Terraform pointed at the emulator.
+  # Fallback if this fails: `python -m scripts.init_resources` (boto3, same resources).
+  init:
+    image: hashicorp/terraform:1.15.6
+    depends_on:
+      emulator:
+        condition: service_healthy
+    working_dir: /work
+    volumes:
+      - ./infra/terraform:/work
+    environment:
+      TF_DATA_DIR: /tmp/tfdata
+      TF_IN_AUTOMATION: "1"
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - terraform init -input=false && terraform apply -auto-approve -input=false -var endpoint_url=http://emulator:5000
+    restart: "no"
+
+  api:
+    build:
+      context: .
+      dockerfile: services/api/Dockerfile
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    environment:
+      <<: *aws-env
+      DUCKDB_PATH: /data/warehouse/mcb.duckdb
+    volumes:
+      # Bind mount: the pipeline on the host writes data/warehouse/mcb.duckdb (scripts/demo.sh).
+      - ./data/warehouse:/data/warehouse:ro
+    ports:
+      - "127.0.0.1:8000:8000"
+
+  worker:
+    build:
+      context: .
+      dockerfile: services/worker/Dockerfile
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    environment:
+      <<: *aws-env
+      WORKER_BATCH_MAX_READINGS: "1000"
+      WORKER_BATCH_MAX_SECONDS: "5"
+      WORKER_VISIBILITY_TIMEOUT: "30"
+    ports:
+      - "127.0.0.1:9101:9101"
+
+  # Optional. Off unless you run `docker compose --profile localstack up`.
+  # LocalStack needs an account token. Put it in a local .env as LOCALSTACK_AUTH_TOKEN.
+  # It is read from the environment only and is never written to this file.
+  localstack:
+    profiles: ["localstack"]
+    image: localstack/localstack:4.9.2
+    environment:
+      LOCALSTACK_AUTH_TOKEN: ${LOCALSTACK_AUTH_TOKEN:-}
+      SERVICES: s3,sqs
+    ports:
+      - "127.0.0.1:4566:4566"
+
+  # Optional operations view. `docker compose --profile obs up -d`.
+  prometheus:
+    profiles: ["obs"]
+    image: prom/prometheus:v3.5.0
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "127.0.0.1:9090:9090"
+    depends_on:
+      - api
+      - worker
+
+  # Anonymous access is read-only (Viewer) and the port is bound to 127.0.0.1 only.
+  grafana:
+    profiles: ["obs"]
+    image: grafana/grafana:12.2.0
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      - prometheus
+

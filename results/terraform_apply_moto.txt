@@ -1,0 +1,8 @@
+Command: terraform apply -auto-approve -var endpoint_url=http://127.0.0.1:5055   (Moto server 5.2.4, host machine, Terraform 1.15.6, aws provider 6.22.1)
+Date: 2026-11-10
+Result: Apply complete! Resources: 4 added, 0 changed, 0 destroyed.
+Created: s3 mcb-raw-readings, s3 mcb-curated-exports, sqs mcb-ingest-dlq, sqs mcb-ingest
+Checked with boto3 afterwards:
+  buckets: ['mcb-raw-readings', 'mcb-curated-exports']
+  mcb-ingest attributes: RedrivePolicy -> dead-letter queue mcb-ingest-dlq, maxReceiveCount 3; VisibilityTimeout 30
+Note: each SQS queue took about 25 s to create (the provider waits for attribute propagation). Label: measured (host CPU), one run.

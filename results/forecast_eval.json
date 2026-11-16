@@ -1,0 +1,24 @@
+{
+  "holdout_days": 7,
+  "sites_evaluated": 3,
+  "methods": {
+    "seasonal_naive": {
+      "points_evaluated": 2016,
+      "points_without_forecast": 0,
+      "mae": 4.2847,
+      "mape_percent": 52.8707,
+      "mape_skipped_zero_actuals": 34
+    },
+    "trailing_mean_4w": {
+      "points_evaluated": 2016,
+      "points_without_forecast": 0,
+      "mae": 3.318,
+      "mape_percent": 41.9898,
+      "mape_skipped_zero_actuals": 34
+    }
+  },
+  "data_source": "synthetic",
+  "label": "simulated",
+  "units": "vehicles per 15-minute interval per site (sum over detectors)",
+  "note": "Synthetic data: not a headline result."
+}

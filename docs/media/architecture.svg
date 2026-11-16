@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 330" role="img" aria-labelledby="t d">
+  <title id="t">mini-city-brain architecture</title>
+  <desc id="d">A replay client posts readings to a FastAPI service, which publishes valid readings to a queue. A worker reads the queue and writes newline-delimited JSON files to object storage; bad messages go to a dead-letter queue. A loader fills DuckDB, dbt builds and tests the models, and a Dagster job runs the loader, dbt and the checks. A forecast reads the models. Prometheus and Grafana watch the API and the worker.</desc>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#444"/></marker>
+    <style>
+      .b { fill:#eef4fb; stroke:#2b5d9b; stroke-width:1.5; rx:6; }
+      .q { fill:#fff5e5; stroke:#a05a00; stroke-width:1.5; rx:6; }
+      .d { fill:#fdeceb; stroke:#a8322b; stroke-width:1.5; rx:6; }
+      .o { fill:#eef7ee; stroke:#2f7d32; stroke-width:1.5; rx:6; }
+      text { font: 14px system-ui, sans-serif; fill:#1b1f23; }
+      .s { font-size: 11px; fill:#555; }
+      line, path.l { stroke:#444; stroke-width:1.5; fill:none; marker-end:url(#a); }
+      .dash { stroke-dasharray:5 4; }
+    </style>
+  </defs>
+  <rect width="900" height="330" fill="#ffffff"/>
+  <rect class="b" x="20" y="40" width="130" height="54"/><text x="85" y="63" text-anchor="middle">Replay client</text><text class="s" x="85" y="80" text-anchor="middle">synthetic or SCATS file</text>
+  <rect class="b" x="190" y="40" width="120" height="54"/><text x="250" y="63" text-anchor="middle">FastAPI</text><text class="s" x="250" y="80" text-anchor="middle">validates readings</text>
+  <rect class="q" x="350" y="40" width="120" height="54"/><text x="410" y="63" text-anchor="middle">Ingest queue</text><text class="s" x="410" y="80" text-anchor="middle">local AWS emulator</text>
+  <rect class="b" x="510" y="40" width="110" height="54"/><text x="565" y="63" text-anchor="middle">Worker</text><text class="s" x="565" y="80" text-anchor="middle">batches by count/time</text>
+  <rect class="o" x="660" y="40" width="130" height="54"/><text x="725" y="63" text-anchor="middle">Raw bucket</text><text class="s" x="725" y="80" text-anchor="middle">ndjson by date</text>
+  <rect class="d" x="350" y="140" width="120" height="46"/><text x="410" y="160" text-anchor="middle">Dead-letter queue</text><text class="s" x="410" y="176" text-anchor="middle">after 3 failed receives</text>
+  <rect class="b" x="660" y="140" width="130" height="46"/><text x="725" y="160" text-anchor="middle">Loader</text><text class="s" x="725" y="176" text-anchor="middle">manifest, idempotent</text>
+  <rect class="o" x="660" y="230" width="130" height="46"/><text x="725" y="250" text-anchor="middle">DuckDB</text><text class="s" x="725" y="266" text-anchor="middle">raw + dbt models</text>
+  <rect class="b" x="480" y="230" width="140" height="46"/><text x="550" y="250" text-anchor="middle">dbt models + tests</text><text class="s" x="550" y="266" text-anchor="middle">staging, marts</text>
+  <rect class="b" x="270" y="230" width="160" height="46"/><text x="350" y="250" text-anchor="middle">Dagster job + checks</text><text class="s" x="350" y="266" text-anchor="middle">blocking: stops on bad data</text>
+  <rect class="b" x="60" y="230" width="160" height="46"/><text x="140" y="250" text-anchor="middle">Baseline forecast</text><text class="s" x="140" y="266" text-anchor="middle">API + static page</text>
+  <rect class="b" x="60" y="140" width="190" height="46"/><text x="155" y="160" text-anchor="middle">Prometheus + Grafana</text><text class="s" x="155" y="176" text-anchor="middle">API and worker metrics</text>
+  <line x1="150" y1="67" x2="188" y2="67"/><line x1="310" y1="67" x2="348" y2="67"/><line x1="470" y1="67" x2="508" y2="67"/><line x1="620" y1="67" x2="658" y2="67"/>
+  <line class="dash" x1="410" y1="94" x2="410" y2="138"/>
+  <line x1="725" y1="94" x2="725" y2="138"/><line x1="725" y1="186" x2="725" y2="228"/>
+  <line x1="660" y1="253" x2="622" y2="253"/><line class="dash" x1="430" y1="253" x2="480" y2="253"/>
+  <line x1="270" y1="253" x2="222" y2="253"/>
+  <line class="dash" x1="250" y1="94" x2="200" y2="138"/><line class="dash" x1="510" y1="80" x2="250" y2="150"/>
+</svg>
