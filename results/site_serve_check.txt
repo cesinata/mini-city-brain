@@ -1,0 +1,9 @@
+Command: python -m http.server (serving site/ files + data/summary.json built from 6 synthetic weeks), then curl
+GET /index.html -> 200, 3161 bytes
+GET /style.css -> 200, 2905 bytes
+GET /app.js -> 200, 8491 bytes
+GET /data/summary.json -> 200, 51969 bytes
+GET /data/architecture.svg -> 200, 4329 bytes
+<h1>When are Melbourne's signalised intersections busiest, and how close does a simple forecast get?</h1>
+Node fake-DOM render of app.js against a summary.json: tests/test_site.py::test_app_js_renders_without_errors_against_a_fake_dom (passed)
+Visual check not done (no browser opened).

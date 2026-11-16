@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>mini-city-brain: when are signalised intersections busiest?</title>
+  <meta name="description" content="Busiest Melbourne traffic signals by hour and weekday, and how close a simple forecast gets.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>When are Melbourne's signalised intersections busiest, and how close does a simple forecast get?</h1>
+    <p class="lede">Vehicle counts from traffic signals, in 15-minute intervals, replayed through a small data pipeline.</p>
+  </header>
+
+  <main>
+    <section id="banner" class="banner" aria-live="polite">Loading data summary...</section>
+
+    <section aria-labelledby="busiest-h">
+      <h2 id="busiest-h">Busiest intersections</h2>
+      <p class="note">Total vehicles counted over the whole period, top 20 sites.</p>
+      <div id="busiest-chart"></div>
+      <details><summary>Show as a table</summary><div id="busiest-table"></div></details>
+    </section>
+
+    <section aria-labelledby="heat-h">
+      <h2 id="heat-h">Hour by weekday</h2>
+      <p class="note" id="heat-note"></p>
+      <div id="heatmap"></div>
+      <details><summary>Show as a table</summary><div id="heat-table"></div></details>
+    </section>
+
+    <section aria-labelledby="fc-h">
+      <h2 id="fc-h">Forecast against actual</h2>
+      <p class="note">Last 7 days of the data. Two baselines that only look backwards: the same hour one week earlier, and the mean of the same hour over the previous four weeks. Neither is a trained model.</p>
+      <label for="fc-site">Site <select id="fc-site"></select></label>
+      <p id="fc-mae" class="note"></p>
+      <div id="fc-chart"></div>
+      <details><summary>Show as a table</summary><div id="fc-table"></div></details>
+    </section>
+
+    <section aria-labelledby="comp-h">
+      <h2 id="comp-h">Data completeness</h2>
+      <p class="note">Share of the 96 daily 15-minute intervals that arrived, averaged over each site's detectors. Lowest first.</p>
+      <div id="completeness"></div>
+    </section>
+
+    <section aria-labelledby="map-h">
+      <h2 id="map-h">Map</h2>
+      <p id="map-note" class="note"></p>
+    </section>
+
+    <section aria-labelledby="how-h">
+      <h2 id="how-h">How it works</h2>
+      <img id="diagram" src="data/architecture.svg" alt="Diagram: a replay client posts readings to an API, which publishes to a queue; a worker writes files to object storage; a loader fills DuckDB; dbt models and checks produce the tables behind this page." width="900">
+      <ul>
+        <li><a href="https://github.com/cesinata/mini-city-brain">Source code</a></li>
+        <li><a href="https://github.com/cesinata/mini-city-brain/tree/main/transform/models">dbt models</a></li>
+        <li><a href="https://github.com/cesinata/mini-city-brain#see-it-break-on-purpose"><code>make demo-bad</code>: a run that fails on purpose</a></li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    <p id="attribution"></p>
+    <p id="generated"></p>
+  </footer>
+  <script src="app.js"></script>
+</body>
+</html>

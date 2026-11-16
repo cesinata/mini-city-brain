@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: "3.13.5"
+  TERRAFORM_VERSION: "1.15.6"
+
+jobs:
+  lint:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: actions/setup-python@v5.6.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: pip install ruff==0.17.2
+      - run: ruff check .
+      - run: ruff format --check .
+
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: actions/setup-python@v5.6.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: pip install -r requirements/direct.txt -c requirements/constraints.txt
+      - run: pytest
+
+  terraform:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: infra/terraform
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: hashicorp/setup-terraform@v3.1.2
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+      - run: terraform fmt -check -recursive
+      - run: terraform init -backend=false -input=false
+      - run: terraform validate
+
+  docker-build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - run: docker build -f services/api/Dockerfile -t mcb-api:ci .
+      - run: docker build -f services/worker/Dockerfile -t mcb-worker:ci .
+
+  compose-smoke:
+    runs-on: ubuntu-24.04
+    needs: [docker-build]
+    env:
+      AWS_ENDPOINT_URL: http://localhost:5000
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_DEFAULT_REGION: ap-southeast-2
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: actions/setup-python@v5.6.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: pip install -r requirements/direct.txt -c requirements/constraints.txt
+      - name: Create the warehouse folder the api bind-mounts
+        run: mkdir -p data/warehouse
+      - run: docker compose up -d --build
+      - run: bash scripts/wait_for_health.sh http://localhost:8000/health 180
+      - name: Replay 1 synthetic day for 2 sites
+        run: python -m ingest.replay --synthetic --days 1 --sites 2 --speed 0 --clean
+      - name: Assert objects exist and the dead-letter queue is empty
+        run: python -m scripts.smoke_assert --wait 60
+      - name: Show logs on failure
+        if: failure()
+        run: docker compose logs --no-color
+      - name: Stop the stack and remove volumes
+        if: always()
+        run: docker compose down -v

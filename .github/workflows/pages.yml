@@ -1,0 +1,52 @@
+name: Pages demo
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 19 * * 0" # weekly, Sunday 19:00 UTC
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+env:
+  PYTHON_VERSION: "3.13.5"
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    env:
+      # Real data only when the repository variable is exactly "true". Set it after the
+      # licence is confirmed (see docs/demo.md). Otherwise the page is built from synthetic data.
+      REAL_DATA_ENABLED: ${{ vars.REAL_DATA_ENABLED }}
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: actions/setup-python@v5.6.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: pip install -r requirements/direct.txt -c requirements/constraints.txt
+      - name: Run the pipeline and export the page data
+        run: python -m scripts.pages_build --out site/data
+      - uses: actions/configure-pages@v5.0.0
+      - uses: actions/upload-pages-artifact@v3.0.0
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+      contents: read
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4.0.5
