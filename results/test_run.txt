@@ -1,0 +1,4 @@
+Command: make test   (pytest over tests/, Python 3.13.5, macOS arm64, host machine, no Docker)
+Date: 2026-11-10
+158 passed, 1 warning in 106.59s (0:01:46)
+Wall time of the make test command: 1:48 (measured (host CPU), one run)
