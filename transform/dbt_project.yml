@@ -1,0 +1,25 @@
+name: mcb
+version: "0.2.0"
+config-version: 2
+profile: mcb
+
+model-paths: ["models"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+target-path: "target"
+clean-targets: ["target"]
+
+flags:
+  send_anonymous_usage_stats: false
+
+vars:
+  # Share of 96 intervals a detector-day must have for the completeness test to pass.
+  min_completeness: 0.9
+  # Share of raw rows that may repeat an earlier key before the duplicate-rate test fails.
+  max_duplicate_rate: 0.01
+  # Local clock offset in hours used for hour-of-day and weekday (decision D24: AEST, no DST).
+  local_offset_hours: 10
+
+models:
+  mcb:
+    +materialized: table

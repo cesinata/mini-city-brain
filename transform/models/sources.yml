@@ -1,0 +1,21 @@
+version: 2
+
+sources:
+  - name: raw
+    schema: raw
+    tables:
+      - name: readings
+        description: One row per reading as written by the worker. May contain repeats of a key.
+        columns:
+          - name: site_id
+            data_tests: [not_null]
+          - name: detector_id
+            data_tests: [not_null]
+          - name: interval_end
+            description: End of the 15-minute interval, UTC.
+            data_tests: [not_null]
+          - name: volume
+            data_tests: [not_null]
+        data_tests:
+          - raw_no_negative_volume
+          - raw_duplicate_rate_within_limit

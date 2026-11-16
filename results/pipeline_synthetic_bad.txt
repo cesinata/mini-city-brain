@@ -1,0 +1,13 @@
+Command: python -m orchestration.run --source synthetic --faults --sites 3 --days 3
+Exit code: 1
+PIPELINE FAILED
+------------------------------------------------------------
+  check: duplicate_rate
+  asset: raw_objects_loaded
+  why:   96 of 1800 raw rows repeat a key (rate 0.0533, limit 0.01)
+
+  check: no_negative_volumes
+  asset: raw_objects_loaded
+  why:   1 reading(s) with a negative volume in raw.readings
+
+Nothing downstream of a failed check was built.

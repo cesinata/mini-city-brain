@@ -1,0 +1,7 @@
+mcb:
+  target: local
+  outputs:
+    local:
+      type: duckdb
+      path: "{{ env_var('DUCKDB_PATH', '../data/warehouse/mcb.duckdb') }}"
+      threads: 1

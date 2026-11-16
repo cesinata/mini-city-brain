@@ -1,0 +1,38 @@
+version: 2
+
+models:
+  - name: stg_readings
+    columns:
+      - name: reading_key
+        data_tests: [not_null, unique]
+      - name: volume
+        data_tests:
+          - not_null
+          - accepted_range:
+              min_value: 0
+              max_value: 2000
+  - name: fct_volume_15min
+    columns:
+      - name: reading_key
+        data_tests: [not_null, unique]
+      - name: volume
+        data_tests:
+          - accepted_range:
+              min_value: 0
+              max_value: 2000
+  - name: fct_volume_hourly
+    columns:
+      - name: site_id
+        data_tests: [not_null]
+      - name: hour_of_day
+        data_tests:
+          - accepted_range:
+              min_value: 0
+              max_value: 23
+  - name: fct_detector_health
+    columns:
+      - name: completeness
+        data_tests:
+          - accepted_range:
+              min_value: 0
+              max_value: 1
