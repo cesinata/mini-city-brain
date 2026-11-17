@@ -170,3 +170,35 @@ def test_completeness_check_reports_the_worst_rows(tmp_path):
     assert not out.passed
     assert "site 1 detector 1 on 2026-03-02 (10/96)" in out.message
     assert checks.completeness(con, 0.05).passed
+
+
+def _health_table(con, rows):
+    con.execute("create schema if not exists main")
+    con.execute(
+        "create or replace table main.fct_detector_health (site_id varchar, detector_id varchar, "
+        "local_date date, intervals_observed integer, completeness double)"
+    )
+    con.executemany("insert into main.fct_detector_health values (?, ?, ?, ?, ?)", rows)
+
+
+def test_completeness_passes_with_a_warning_below_the_share_limit(tmp_path):
+    con = make_db(tmp_path)
+    good = [("1", str(d), f"2026-03-{d:02d}", 96, 1.0) for d in range(1, 29)]
+    _health_table(con, [*good, ("9", "1", "2026-03-02", 48, 0.5)])  # 1 of 29 = 3.4%
+    strict = checks.completeness(con, 0.9)
+    assert not strict.passed  # default share 0: the old rule
+    tolerant = checks.completeness(con, 0.9, 0.05)
+    assert tolerant.passed and tolerant.warning
+    assert tolerant.message.startswith("WARNING 1 of 29 detector-day(s) (3.45%) below 0.9")
+    assert "site 9 detector 1 on 2026-03-02 (48/96)" in tolerant.message
+    over = checks.completeness(con, 0.9, 0.01)
+    assert not over.passed and not over.warning and "limit 1%" in over.message
+
+
+def test_pipeline_summary_prints_the_completeness_warning(tmp_path, manifest, monkeypatch, capsys):
+    monkeypatch.setenv("DUCKDB_PATH", str(tmp_path / "wh.duckdb"))
+    s = settings_for(tmp_path, min_completeness=1.01, max_incomplete_share=1.0)
+    res = run_pipeline(s, manifest)
+    assert res.success, res.failures
+    assert len(res.warnings) == 1
+    assert res.warnings[0].startswith("completeness on fct_detector_health: 4 of 4 detector-day")

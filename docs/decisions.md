@@ -297,3 +297,30 @@ Each entry has an ID, date, choice, reason and how to revert. New entries go at 
 - **Reason:** On a desktop screen the page stayed a 960 px phone-style column. The charts are SVGs drawn 720 units wide, so the wide ones keep the full width and the bar chart gets the larger share of its row, to keep labels readable. The completeness table moves up beside the bar chart on desktop only; it has nothing focusable, so keyboard order does not change.
 - **Check:** headless Chrome screenshots at 1600, 1280 and 600 px (not saved); `tests/test_site.py` checks that the desktop grid places every section.
 - **Revert:** Delete the `@media (min-width: 1100px)` block and the `s-*` classes.
+
+## D43. Reader and models follow the real file: -1 is missing, Melbourne wall-clock time (2026-11-17, supersedes the time-zone choice in D24)
+
+- **Choice:**
+  - `-1` in a `Vxx` column is a missing interval: no reading, counted. Other negative values still go to the API, which rejects them.
+  - Intervals are read in `Australia/Melbourne` wall-clock time by default. `V00` starts at local midnight and lasts 15 minutes of real time. Intervals that start inside the clock gap when daylight saving begins (02:00 to 02:45) are skipped and counted. `--tz AEST` keeps the old fixed UTC+10 reading.
+  - dbt converts to local time with the time zone (`local_time_zone: "Australia/Melbourne"`) instead of adding 10 hours (`local_offset_hours` is removed).
+  - The synthetic generator writes `-1` for missing intervals, `-1` for V07 to V11 on the day clocks go forward, CRLF line endings, and (with `write_zip`) one `VSDATA_YYYYMMDD.csv` per day. Its negative-value fault is now `-5`.
+- **Reason:** A read-only scan of the October 2026 file (`results/real_data_inspection.txt`) showed `-1` and no blanks, and showed the daylight-saving gap at 02:00 on 4 October with the morning peak staying at 08:00 local across the change. Read as before, every `-1` would reach the API as a negative volume and be rejected as bad data, local hours would be one hour off from 4 October, and on the change day the elapsed-time mapping would have pushed the evening's intervals into the next day.
+- **Evidence limits:** The afternoon peak is broad (hours 15 to 17 within 0.1 percentage points), so it does not tell the two readings apart; the morning peak and the gap do. 1 October falls in the Victorian school holidays. The day clocks go back has not been checked. Saturday 3 October has an unexplained all-`-1` hour (V08 to V11).
+- **Check:** `tests/test_ingest.py` (sentinel, clock gap with continuous 15-minute steps, default zone, monthly ZIP layout) and `tests/test_warehouse_dbt.py` (local hour 8 and local day across the change).
+- **Revert:** Pass `--tz AEST`, set `local_time_zone` to a fixed-offset zone, and treat `-1` as a value in `ingest/scats.py`.
+
+## D44. Host-side tools call the API at 127.0.0.1 (2026-11-17)
+
+- **Choice:** The replay client's default `--api-url`, `scripts/wait_for_health.sh`, `scripts/demo.sh`, `scripts/demo_bad.sh`, `scripts/demo_bad.py`, `env.example`, the CI health wait and the URLs `make demo` prints use `http://127.0.0.1:8000` (and `127.0.0.1` for Grafana and the Dagster UI) instead of `localhost`.
+- **Reason:** Compose publishes the API on `127.0.0.1:8000` (IPv4) only. On 2026-11-17 another program on the laptop (a `python -m http.server` serving `docs/`) listened on IPv6 port 8000, `localhost` resolved to `::1`, and all 3,156 batches of the first real-data replay went to that server, which answered HTTP 501. Nothing reached the API. Same cause as D34.
+- **Check:** `tests/test_compose.py` asserts the published port and every host-side API URL listed above.
+- **Revert:** Change the URLs back to `localhost`; the test lists the files.
+
+## D45. Completeness fails a run only above a share of incomplete detector-days (2026-11-17, chosen by the owner)
+
+- **What happened:** On October 2026 (20 sites, 536 detectors, 16,532 detector-days) the blocking completeness check failed: 53 detector-days (0.32%) had fewer than 90% of their 96 intervals. 31 of them are one detector at site 849 that reports about half the day all month; the rest are spread over six sites. Mean completeness was 99.41% (`results/real_completeness_breakdown.txt`, measured (host CPU), one run). Under the old rule one broken detector among hundreds failed every real run, so the Pages build would always have fallen back to synthetic data.
+- **Choice (owner, from two options proposed after the numbers were reported):** keep 0.9 per detector-day (`min_completeness`), and fail the run only when more than 1% of detector-days are below it (`max_incomplete_share: 0.01` in `transform/dbt_project.yml` and `PipelineSettings`). Below that share the Python check passes and lists the incomplete detector-days; `python -m orchestration.run` prints them as `warning:` lines. This matches how `duplicate_rate` works.
+- **Result:** the same October data now passes with a warning for the 53 detector-days (`results/real_pipeline.txt`). It would fail if incomplete detector-days were about three times as common, or if one bad day hit many detectors at once.
+- **Check:** `tests/test_orchestration.py` (strict default, warning below the limit, failure above it, the warning in the run summary) and `tests/test_warehouse_dbt.py` (1 of 200 incomplete detector-days passes, 3 of 200 fail).
+- **Revert:** set `max_incomplete_share` to 0.

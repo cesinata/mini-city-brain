@@ -37,9 +37,9 @@ def main(replay_json: str, pipeline_txt: str) -> int:
     print(f"  5. pipeline:            {checks}")
     print("")
     print("URLs")
-    print("  API docs:   http://localhost:8000/docs")
-    print("  Grafana:    http://localhost:3000   (anonymous viewer, dashboard 'mini-city-brain')")
-    print("  Dagster UI: run `make dagster-ui`, then open http://localhost:3001")
+    print("  API docs:   http://127.0.0.1:8000/docs")
+    print("  Grafana:    http://127.0.0.1:3000   (anonymous viewer, dashboard 'mini-city-brain')")
+    print("  Dagster UI: run `make dagster-ui`, then open http://127.0.0.1:3001")
     return 0
 
 

@@ -1,0 +1,90 @@
+# python -m orchestration.run --source bucket --db data/warehouse/real.duckdb --replay-clock 2026-10-31T13:00:00+00:00, 2026-11-17, after the replay. Exit 0, 32 s wall time, with the rate-based completeness rule (decisions D45). Label: measured (host CPU), one run. Data: real.
+# Source: Department of Transport and Planning (Victoria), Traffic Signal Volume Data, CC BY 4.0.
+# Saved output with terminal colour codes removed and the repository path shown as <repo>.
+
+06:07:10  Running with dbt=1.12.6
+06:07:10  Registered adapter: duckdb=1.11.0
+06:07:11  Unable to do partial parsing because config vars, config profile, or config target have changed
+06:07:11  Unable to do partial parsing because a project config has changed
+06:07:11  [WARNING][MissingArgumentsPropertyInGenericTestDeprecation]: Deprecated
+functionality
+Found top-level arguments to test `accepted_range` defined on 'stg_readings' in
+package 'mcb' (models/schema.yml). Arguments to generic tests should be nested
+under the `arguments` property.
+06:07:12  Performance info: <repo>/data/dbt_target/perf_info.json
+06:07:12  [WARNING][DeprecationsSummary]: Deprecated functionality
+Summary of encountered deprecations:
+- MissingArgumentsPropertyInGenericTestDeprecation: 4 occurrences
+To see all deprecation instances instead of just the first occurrence of each,
+run command again with the `--show-all-deprecations` flag. You may also need to
+run with `--no-partial-parse` as some deprecations are only encountered during
+parsing.
+Running with dbt=1.12.6
+Registered adapter: duckdb=1.11.0
+Unable to do partial parsing because config vars, config profile, or config target have changed
+[WARNING][MissingArgumentsPropertyInGenericTestDeprecation]: Deprecated
+functionality
+Found top-level arguments to test `accepted_range` defined on 'stg_readings' in
+package 'mcb' (models/schema.yml). Arguments to generic tests should be nested
+under the `arguments` property.
+Found 4 models, 17 data tests, 1 source, 503 macros
+
+Concurrency: 1 threads (target='local')
+
+1 of 21 START test source_not_null_raw_readings_detector_id .................... [RUN]
+1 of 21 PASS source_not_null_raw_readings_detector_id .......................... [PASS in 0.02s]
+2 of 21 START test source_not_null_raw_readings_interval_end ................... [RUN]
+2 of 21 PASS source_not_null_raw_readings_interval_end ......................... [PASS in 0.01s]
+3 of 21 START test source_not_null_raw_readings_site_id ........................ [RUN]
+3 of 21 PASS source_not_null_raw_readings_site_id .............................. [PASS in 0.01s]
+4 of 21 START test source_not_null_raw_readings_volume ......................... [RUN]
+4 of 21 PASS source_not_null_raw_readings_volume ............................... [PASS in 0.01s]
+5 of 21 START test source_raw_duplicate_rate_within_limit_raw_readings_ ........ [RUN]
+5 of 21 PASS source_raw_duplicate_rate_within_limit_raw_readings_ .............. [PASS in 0.06s]
+6 of 21 START test source_raw_no_negative_volume_raw_readings_ ................. [RUN]
+6 of 21 PASS source_raw_no_negative_volume_raw_readings_ ....................... [PASS in 0.01s]
+7 of 21 START sql table model main.stg_readings ................................ [RUN]
+7 of 21 OK created sql table model main.stg_readings ........................... [OK in 0.36s]
+8 of 21 START test accepted_range_stg_readings_volume__2000__0 ................. [RUN]
+8 of 21 PASS accepted_range_stg_readings_volume__2000__0 ....................... [PASS in 0.01s]
+9 of 21 START test not_null_stg_readings_reading_key ........................... [RUN]
+9 of 21 PASS not_null_stg_readings_reading_key ................................. [PASS in 0.01s]
+10 of 21 START test not_null_stg_readings_volume ............................... [RUN]
+10 of 21 PASS not_null_stg_readings_volume ..................................... [PASS in 0.01s]
+11 of 21 START test unique_stg_readings_reading_key ............................ [RUN]
+11 of 21 PASS unique_stg_readings_reading_key .................................. [PASS in 0.05s]
+12 of 21 START sql table model main.fct_volume_15min ........................... [RUN]
+12 of 21 OK created sql table model main.fct_volume_15min ...................... [OK in 0.32s]
+13 of 21 START test accepted_range_fct_volume_15min_volume__2000__0 ............ [RUN]
+13 of 21 PASS accepted_range_fct_volume_15min_volume__2000__0 .................. [PASS in 0.01s]
+14 of 21 START test not_null_fct_volume_15min_reading_key ...................... [RUN]
+14 of 21 PASS not_null_fct_volume_15min_reading_key ............................ [PASS in 0.01s]
+15 of 21 START test unique_fct_volume_15min_reading_key ........................ [RUN]
+15 of 21 PASS unique_fct_volume_15min_reading_key .............................. [PASS in 0.03s]
+16 of 21 START sql table model main.fct_detector_health ........................ [RUN]
+16 of 21 OK created sql table model main.fct_detector_health ................... [OK in 0.03s]
+17 of 21 START sql table model main.fct_volume_hourly .......................... [RUN]
+17 of 21 OK created sql table model main.fct_volume_hourly ..................... [OK in 0.06s]
+18 of 21 START test accepted_range_fct_detector_health_completeness__1__0 ...... [RUN]
+18 of 21 PASS accepted_range_fct_detector_health_completeness__1__0 ............ [PASS in 0.01s]
+19 of 21 START test completeness_below_threshold ............................... [RUN]
+19 of 21 PASS completeness_below_threshold ..................................... [PASS in 0.01s]
+20 of 21 START test accepted_range_fct_volume_hourly_hour_of_day__23__0 ........ [RUN]
+20 of 21 PASS accepted_range_fct_volume_hourly_hour_of_day__23__0 .............. [PASS in 0.01s]
+21 of 21 START test not_null_fct_volume_hourly_site_id ......................... [RUN]
+21 of 21 PASS not_null_fct_volume_hourly_site_id ............................... [PASS in 0.01s]
+
+Finished running 4 table models, 17 data tests in 0 hours 0 minutes and 1.14 seconds (1.14s).
+
+Completed successfully
+
+Done. PASS=21 WARN=0 ERROR=0 SKIP=0 NO-OP=0 REUSED=0 TOTAL=21
+[WARNING][DeprecationsSummary]: Deprecated functionality
+Summary of encountered deprecations:
+- MissingArgumentsPropertyInGenericTestDeprecation: 4 occurrences
+To see all deprecation instances instead of just the first occurrence of each,
+run command again with the `--show-all-deprecations` flag. You may also need to
+run with `--no-partial-parse` as some deprecations are only encountered during
+parsing.
+PIPELINE OK: 15 checks passed
+  warning: completeness on fct_detector_health: 53 of 16532 detector-day(s) (0.32%) below 0.9 of 96 intervals, limit 1%: site 1197 detector 7 on 2026-10-09 (22/96), site 2816 detector 12 on 2026-10-31 (55/96), site 2843 detector 17 on 2026-10-01 (35/96) and 50 more

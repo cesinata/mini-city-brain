@@ -1,0 +1,29 @@
+{
+  "holdout_days": 7,
+  "sites_evaluated": 20,
+  "methods": {
+    "seasonal_naive": {
+      "points_evaluated": 13436,
+      "points_without_forecast": 4,
+      "mae": 114.3788,
+      "mape_percent": 30.0519,
+      "mape_skipped_zero_actuals": 10
+    },
+    "trailing_mean_4w": {
+      "points_evaluated": 13440,
+      "points_without_forecast": 0,
+      "mae": 99.8542,
+      "mape_percent": 28.2146,
+      "mape_skipped_zero_actuals": 10
+    }
+  },
+  "data_period_local": {
+    "first_day": "2026-10-01",
+    "last_day": "2026-10-31",
+    "time_zone": "Australia/Melbourne"
+  },
+  "data_source": "real",
+  "label": "measured (host CPU)",
+  "units": "vehicles per 15-minute interval per site (sum over detectors)",
+  "note": "Real data, one run on the host machine."
+}

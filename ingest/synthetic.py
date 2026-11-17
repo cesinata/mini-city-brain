@@ -1,4 +1,8 @@
-"""Deterministic synthetic traffic-signal volumes in the SCATS column layout (docs/data.md).
+"""Deterministic synthetic traffic-signal volumes in the SCATS layout (docs/data.md).
+
+The layout mirrors a real monthly file (checked on October 2026, decisions D43): the published
+columns, `-1` for an interval with no data, and, for `write_zip`, one `VSDATA_YYYYMMDD.csv` per
+day. On the day Melbourne clocks go forward, V07 to V11 are `-1`, as in the real file.
 
 Everything computed from this data is labelled `simulated`. The generator can inject faults so
 that the data-quality checks have something to catch.
@@ -7,11 +11,14 @@ that the data-quality checks have something to catch.
 from __future__ import annotations
 
 import csv
+import io
 import math
 import random
+import zipfile
 from collections.abc import Iterable
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 INTERVALS_PER_DAY = 96
 VOLUME_COLUMNS = [f"V{i:02d}" for i in range(INTERVALS_PER_DAY)]
@@ -26,6 +33,9 @@ COLUMNS = [
     "CT_ALARM_24HOUR",
 ]
 REGIONS = ["NORTH", "SOUTH", "EAST", "WEST"]
+MISSING = "-1"  # how the real files mark an interval with no data
+MELBOURNE = ZoneInfo("Australia/Melbourne")
+CLOCK_GAP_INTERVALS = range(7, 12)  # V07 to V11 are -1 in the real file when clocks go forward
 DEFAULT_START = date(2026, 3, 2)  # a Monday
 DEFAULT_SEED = 20260310
 
@@ -52,8 +62,9 @@ def generate(
     """Return rows in the SCATS layout. Values are strings, as they would be read from a CSV.
 
     With `faults=True` the output contains, whenever there is enough data:
-      * detector 1 of the first site has missing intervals (blank values) on day 1,
-      * one negative value on the second site (if there is one, else the first),
+      * detector 1 of the first site has missing intervals (`-1`) on day 1,
+      * one negative value other than -1 (`-5`) on the second site (if there is one, else the
+        first); the real October file has none, but the API must still reject one,
       * the last detector of the last site reports many alarms (and gaps on day 1),
       * one row repeated exactly (a duplicate).
     """
@@ -72,11 +83,21 @@ def generate(
                 for k in range(INTERVALS_PER_DAY):
                     mean = det_scale * _shape(k, weekend)
                     vols.append(max(0, round(rng.gauss(mean, math.sqrt(mean + 1)))))
+                if clocks_go_forward(d):
+                    for k in CLOCK_GAP_INTERVALS:
+                        vols[k] = None
                 rows.append(_row(site_id, d, str(det), vols, region, alarms=0))
 
     if faults and rows:
         _inject_faults(rows, site_ids, detectors, days)
     return rows
+
+
+def clocks_go_forward(d: date) -> bool:
+    """True on the day Melbourne moves from standard to daylight time."""
+    start = datetime(d.year, d.month, d.day, tzinfo=MELBOURNE).utcoffset()
+    end = (datetime(d.year, d.month, d.day, tzinfo=MELBOURNE) + timedelta(days=1)).utcoffset()
+    return end > start
 
 
 def _row(
@@ -93,12 +114,12 @@ def _row(
         "CT_ALARM_24HOUR": str(alarms),
     }
     for name, v in zip(VOLUME_COLUMNS, vols, strict=True):
-        row[name] = "" if v is None else str(v)
+        row[name] = MISSING if v is None else str(v)
     return row
 
 
 def _refresh(row: dict[str, str]) -> None:
-    vals = [row[c] for c in VOLUME_COLUMNS if row[c] != ""]
+    vals = [row[c] for c in VOLUME_COLUMNS if row[c] not in ("", MISSING)]
     row["CT_RECORDS"] = str(len(vals))
     row["QT_VOLUME_24HOUR"] = str(sum(int(v) for v in vals if int(v) > 0))
 
@@ -121,18 +142,18 @@ def _inject_faults(rows: list[dict[str, str]], site_ids: list[str], detectors: i
     # 1. missing intervals: blank 12 consecutive intervals (03:00 to 06:00) for site 1 detector 1
     gap = _find(rows, first, "1", 0, start)
     for k in range(12, 24):
-        gap[VOLUME_COLUMNS[k]] = ""
+        gap[VOLUME_COLUMNS[k]] = MISSING
     _refresh(gap)
     # 2. a negative value
     neg_site = site_ids[1] if len(site_ids) > 1 else first
     neg = _find(rows, neg_site, "1", min(1, days - 1), start)
-    neg[VOLUME_COLUMNS[34]] = "-1"
+    neg[VOLUME_COLUMNS[34]] = "-5"
     _refresh(neg)
     # 3. alarm-heavy detector with gaps on day 1
     bad = _find(rows, last, str(detectors), 0, start)
     bad["CT_ALARM_24HOUR"] = "37"
     for k in range(40, 52):
-        bad[VOLUME_COLUMNS[k]] = ""
+        bad[VOLUME_COLUMNS[k]] = MISSING
     _refresh(bad)
     # 4. one exact duplicate row, placed right after the original
     index = rows.index(_find(rows, first, "1", min(1, days - 1), start))
@@ -150,6 +171,22 @@ def write_csv(rows: Iterable[dict[str, str]], path: Path) -> int:
             writer.writerow(row)
             count += 1
     return count
+
+
+def write_zip(rows: Iterable[dict[str, str]], path: Path) -> int:
+    """Write rows as a monthly-style ZIP: one `VSDATA_YYYYMMDD.csv` per day, in row order."""
+    by_day: dict[str, list[dict[str, str]]] = {}
+    for row in rows:
+        by_day.setdefault(row["QT_INTERVAL_COUNT"], []).append(row)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as zf:
+        for day, day_rows in by_day.items():
+            buffer = io.StringIO()
+            writer = csv.DictWriter(buffer, fieldnames=COLUMNS, lineterminator="\r\n")
+            writer.writeheader()
+            writer.writerows(day_rows)
+            zf.writestr(f"VSDATA_{day.replace('-', '')}.csv", buffer.getvalue())
+    return sum(len(r) for r in by_day.values())
 
 
 def main() -> None:

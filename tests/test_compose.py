@@ -65,3 +65,26 @@ def test_host_side_endpoints_use_the_published_emulator_port():
         assert found, f"no emulator URL found in {path}"
         assert set(found) == {expected}, f"{path}: {found} != {expected}"
     assert container_port == "5000"
+
+
+# Files that call the API from the host, and the text around the URL in each.
+HOST_API_URLS = {
+    "ingest/replay.py": r'"--api-url", default="([^"]+)"',
+    "scripts/wait_for_health.sh": r'URL="\$\{1:-(http://[^/"]+)',
+    "scripts/demo.sh": r"wait_for_health\.sh (http://[^/ ]+)",
+    "scripts/demo_bad.sh": r"wait_for_health\.sh (http://[^/ ]+)",
+    "scripts/demo_bad.py": r'"API_URL", "([^"]+)"',
+    "env.example": r"API_URL=(\S+)",
+    ".github/workflows/ci.yml": r"wait_for_health\.sh (http://[^/ ]+)",
+}
+
+
+def test_host_side_api_urls_use_the_ipv4_address_compose_publishes():
+    # Compose publishes on 127.0.0.1 only. `localhost` can resolve to ::1 first and reach
+    # whatever else listens on port 8000 there (decisions D44).
+    ports = _compose()["services"]["api"]["ports"]
+    assert ports == ["127.0.0.1:8000:8000"]
+    for path, pattern in HOST_API_URLS.items():
+        found = re.findall(pattern, (ROOT / path).read_text())
+        assert found, f"no API URL found in {path}"
+        assert set(found) == {"http://127.0.0.1:8000"}, f"{path}: {found}"

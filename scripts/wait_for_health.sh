@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Wait until the API reports "ok" on /health. Usage: bash scripts/wait_for_health.sh [url] [seconds]
 set -uo pipefail
-URL="${1:-http://localhost:8000/health}"
+URL="${1:-http://127.0.0.1:8000/health}"
 LIMIT="${2:-120}"
 for ((i = 0; i < LIMIT; i++)); do
   if curl -fsS "$URL" 2>/dev/null | grep -q '"status":"ok"'; then

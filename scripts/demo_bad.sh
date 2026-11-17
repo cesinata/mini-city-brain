@@ -12,5 +12,5 @@ export AWS_DEFAULT_REGION=ap-southeast-2
 export DBT_TARGET_PATH="${DBT_TARGET_PATH:-data/dbt_target}"
 mkdir -p data/warehouse
 docker compose --profile obs up -d --build
-bash scripts/wait_for_health.sh http://localhost:8000/health 180
+bash scripts/wait_for_health.sh http://127.0.0.1:8000/health 180
 "$PY" -m scripts.demo_bad

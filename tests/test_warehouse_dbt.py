@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import json
+from datetime import date
 from pathlib import Path
 
 import duckdb
 import pytest
 
+from ingest import scats, synthetic
 from tests.helpers import run_dbt, synthetic_readings
 from warehouse import load as wh
 
@@ -68,7 +70,7 @@ def test_loader_stores_interval_end_as_utc(aws, tmp_path):
     db = tmp_path / "wh.duckdb"
     wh.load(aws.settings, db, s3=aws.s3)
     first = query(db, "select min(interval_end)::varchar from raw.readings")[0][0]
-    assert first == "2026-03-01 14:15:00"  # V00 of 2026-03-02 AEST
+    assert first == "2026-03-01 13:15:00"  # V00 of 2026-03-02 ends 00:15 AEDT (UTC+11)
 
 
 def test_failed_object_load_rolls_back_and_is_retried(aws, tmp_path):
@@ -162,3 +164,54 @@ def test_completeness_threshold_comes_from_the_project_vars(tmp_path):
     db = seeded_db(tmp_path, clean[:40] + clean[60:])
     ok, statuses = run_dbt(db, tmp_path, "build", extra_vars="{min_completeness: 0.5}")
     assert ok, statuses
+
+
+def test_local_hour_and_day_follow_melbourne_time_across_the_clock_change(tmp_path):
+    """8:00 to 9:00 local is hour 8 before and after daylight saving starts (4 Oct 2026)."""
+    rows = synthetic.generate(1, 1, 3, start=date(2026, 10, 3), faults=False)
+    synthetic.write_csv(rows, tmp_path / "dst.csv")
+    readings, _ = scats.read_readings(tmp_path / "dst.csv", source="synthetic")
+    db = seeded_db(tmp_path, readings)
+    ok, _ = run_dbt(db, tmp_path, "build", extra_vars="{min_completeness: 0.5}")
+    assert ok
+    per_day = query(
+        db,
+        "select local_date::varchar, intervals_observed from main.fct_detector_health order by 1",
+    )
+    assert per_day == [("2026-10-03", 96), ("2026-10-04", 91), ("2026-10-05", 96)]
+    hour8 = query(
+        db,
+        "select cast(local_interval_start as date)::varchar, min(local_interval_start)::varchar "
+        "from main.fct_volume_15min where extract(hour from local_interval_start) = 8 "
+        "group by 1 order by 1",
+    )
+    assert [r[1][11:16] for r in hour8] == ["08:00", "08:00", "08:00"]
+
+
+def _drop_intervals(readings, site, detector, day_prefix, count):
+    """Remove `count` readings of one detector on one UTC day prefix."""
+    out, dropped = [], 0
+    for r in readings:
+        hit = r["site_id"] == site and r["detector_id"] == detector
+        if hit and r["interval_end"].startswith(day_prefix) and dropped < count:
+            dropped += 1
+            continue
+        out.append(r)
+    assert dropped == count
+    return out
+
+
+def test_completeness_test_allows_a_small_share_of_incomplete_detector_days(tmp_path):
+    """200 detector-days: 1 incomplete (0.5%) passes, 3 incomplete (1.5%) fail (limit 1%)."""
+    readings = synthetic_readings(tmp_path, sites=10, detectors=2, days=10)
+    one = _drop_intervals(readings, "1000", "1", "2026-03-03", 40)
+    db = seeded_db(tmp_path, one)
+    ok, statuses = run_dbt(db, tmp_path, "build")
+    assert ok, statuses
+    three = _drop_intervals(one, "1007", "1", "2026-03-04", 40)
+    three = _drop_intervals(three, "1014", "2", "2026-03-05", 40)
+    (tmp_path / "b").mkdir()
+    db2 = seeded_db(tmp_path / "b", three)
+    ok, statuses = run_dbt(db2, tmp_path / "b", "build")
+    assert not ok
+    assert "completeness_below_threshold" in failed(statuses)

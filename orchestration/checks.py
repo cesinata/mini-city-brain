@@ -18,6 +18,7 @@ class Outcome:
     asset: str
     passed: bool
     message: str
+    warning: bool = False  # passed, but with something worth printing (decisions D45)
 
 
 def freshness(
@@ -65,7 +66,15 @@ def duplicate_rate(con: duckdb.DuckDBPyConnection, max_rate: float) -> Outcome:
     )
 
 
-def completeness(con: duckdb.DuckDBPyConnection, min_completeness: float) -> Outcome:
+def completeness(
+    con: duckdb.DuckDBPyConnection, min_completeness: float, max_incomplete_share: float = 0.0
+) -> Outcome:
+    """Fail when more than `max_incomplete_share` of detector-days are below `min_completeness`.
+
+    Below that share the check passes and lists the incomplete detector-days as a warning. With
+    the default share of 0, any incomplete detector-day fails, as before (decisions D45).
+    """
+    total = con.execute("select count(*) from main.fct_detector_health").fetchone()[0]
     rows = con.execute(
         "select site_id, detector_id, local_date, intervals_observed "
         "from main.fct_detector_health where completeness < ? order by 1, 2, 3",
@@ -78,11 +87,13 @@ def completeness(con: duckdb.DuckDBPyConnection, min_completeness: float) -> Out
             True,
             f"every detector-day has >= {min_completeness:g}",
         )
+    share = len(rows) / total
     sample = ", ".join(f"site {s} detector {d} on {day} ({n}/96)" for s, d, day, n in rows[:3])
     more = f" and {len(rows) - 3} more" if len(rows) > 3 else ""
-    return Outcome(
-        "completeness",
-        "fct_detector_health",
-        False,
-        f"{len(rows)} detector-day(s) below {min_completeness:g} of 96 intervals: {sample}{more}",
+    counts = (
+        f"{len(rows)} of {total} detector-day(s) ({share:.2%}) below {min_completeness:g} of 96 "
+        f"intervals, limit {max_incomplete_share:.0%}: {sample}{more}"
     )
+    if share <= max_incomplete_share:
+        return Outcome("completeness", "fct_detector_health", True, f"WARNING {counts}", True)
+    return Outcome("completeness", "fct_detector_health", False, counts)
