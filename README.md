@@ -6,7 +6,7 @@ mini-city-brain replays public Victorian traffic-signal volume data as a stream 
 
 ![Isometric city feeding a pipeline of eight stages (replay, API, queue, worker, raw bucket, DuckDB and dbt, checks, forecast) that ends at a dashboard.](docs/media/hero-isometric.svg)
 
-**Live demo:** <https://cesinata.github.io/mini-city-brain/>. It currently shows synthetic data and says so in a banner; the real October 2026 month is in the screenshots below. How the page is built: [docs/demo.md](docs/demo.md).
+**Live demo:** <https://cesinata.github.io/mini-city-brain/>. It shows the real October 2026 month for the 20 busiest sites, downloaded and built by the GitHub Pages workflow on 2026-11-17; the banner says whether the data is real or synthetic. How the page is built: [docs/demo.md](docs/demo.md).
 
 ## Why this exists
 
@@ -47,7 +47,7 @@ All three show the real October 2026 data (contains Traffic Signal Volume Data f
 | AWS services | A local AWS emulator (Moto). No real cloud account and no real credentials. |
 | Replay speed | The replay client posts readings faster than they happened (for example 60x, or as fast as possible). It is a replay, not a live feed. |
 | Forecast results | One real month, quoted above (`measured (host CPU)`). Results on synthetic data are `simulated` and are not quoted here. |
-| Demo page | Built from synthetic data unless I set `REAL_DATA_ENABLED`. The page shows which. |
+| Demo page | The live page is built from real data because `REAL_DATA_ENABLED` is set; without it, or if the download fails, it falls back to synthetic data. The page shows which. |
 
 ## Architecture
 
