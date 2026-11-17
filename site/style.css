@@ -22,9 +22,10 @@ h2 { font-size: 1.2rem; margin: 2rem 0 .25rem; }
 section { margin-bottom: 1rem; }
 .banner {
   border: 1px solid var(--line); background: var(--card); border-radius: 6px; padding: .75rem 1rem;
+  font-size: .875rem; /* 14px, two sizes below the 16px body text */
 }
 .banner.synthetic { background: var(--warn-bg); color: var(--warn-fg); border-color: transparent; }
-.banner .big { display: block; font-size: 1.3rem; font-weight: 700; letter-spacing: .04em; }
+.banner .big { display: block; font-size: 1.1rem; font-weight: 700; letter-spacing: .04em; }
 svg { max-width: 100%; height: auto; display: block; }
 svg text { fill: var(--fg); font: 12px system-ui, sans-serif; }
 svg .muted { fill: var(--muted); }

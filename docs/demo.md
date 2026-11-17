@@ -99,4 +99,5 @@ There is no GIF in the repo yet, and the README does not show one. After recordi
 | `make up`, `make replay`, smoke check, `make down` | Run 2026-11-17, each exit 0 (`results/compose_targets.txt`) |
 | API health, forecast endpoint, Prometheus targets, Grafana health and dashboard, Dagster UI on port 3001 | Checked with `curl` on 2026-11-17 (`results/stack_checks.txt`) |
 | Grafana dashboard, Dagster UI and API docs by eye | Looked at 2026-11-17. Two Grafana panels were wrong and are fixed (decisions D39) |
-| Pages workflow | Not run (needs GitHub). The real-data download is tested with a fake HTTP client only |
+| README screenshots (demo page, Grafana, Dagster asset graph) | Taken 2026-11-17 with headless Chrome after a real October 2026 replay and pipeline run (`docs/media/*.png`) |
+| Pages workflow | Run on GitHub on 2026-11-17 from `main` with `REAL_DATA_ENABLED` unset: build and deploy passed, and https://cesinata.github.io/mini-city-brain/ serves the synthetic page. The real-data download is still tested with a fake HTTP client only |

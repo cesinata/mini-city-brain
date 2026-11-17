@@ -6,7 +6,7 @@ mini-city-brain replays public Victorian traffic-signal volume data as a stream 
 
 ![Isometric city feeding a pipeline of eight stages (replay, API, queue, worker, raw bucket, DuckDB and dbt, checks, forecast) that ends at a dashboard.](docs/media/hero-isometric.svg)
 
-**Live demo:** [not published yet](docs/demo.md)
+**Live demo:** <https://cesinata.github.io/mini-city-brain/>. It currently shows synthetic data and says so in a banner; the real October 2026 month is in the screenshots below. How the page is built: [docs/demo.md](docs/demo.md).
 
 ## Why this exists
 
@@ -21,6 +21,22 @@ First answer, from one real month: across the 20 busiest signal sites in October
 How close a forecast gets, on the last 7 days of that month: the mean of the same 15-minute interval in earlier weeks was off by **99.9 vehicles per interval per site** (mean absolute error, MAPE 28.2%). Repeating the same interval one week earlier was off by 114.4 (MAPE 30.1%) (`measured (host CPU)`, one run, `results/forecast_eval_real.json`). October gives only 24 days of history before that week, so the "four-week" mean uses at most three earlier weeks.
 
 Contains Traffic Signal Volume Data from the Department of Transport and Planning (Victoria), licensed under CC BY 4.0.
+
+## What it looks like
+
+The demo page on the real October 2026 month: busiest sites, data completeness per site, and vehicles by local hour and weekday.
+
+![Demo page on real October 2026 data: a bar chart of the 20 busiest signal sites, a completeness table per site, and a heat map of vehicles by local hour and weekday that peaks on weekday afternoons.](docs/media/demo-page-real-october-2026.png)
+
+Grafana while the real month was replayed through the API, queue and worker on my laptop: the ingest rate rises and falls with the replay, nothing is rejected, the dead-letter queue stays empty, and "time since last pipeline success" drops to zero when the pipeline run finishes.
+
+![Grafana dashboard with six panels: ingest rate, rejection rate, ingest queue depth, dead-letter queue, API p95 latency, and time since the last pipeline success.](docs/media/grafana-real-replay.png)
+
+The Dagster asset graph after that run: load from the bucket, the four dbt models and the run record, every asset materialized and every check passed.
+
+![Dagster asset graph: raw_objects_loaded, stg_readings, fct_volume_15min, fct_detector_health, fct_volume_hourly and pipeline_last_success, all materialized with their asset checks passed.](docs/media/dagster-asset-graph.png)
+
+All three show the real October 2026 data (contains Traffic Signal Volume Data from the Department of Transport and Planning (Victoria), licensed under CC BY 4.0), captured with headless Chrome on 2026-11-17.
 
 ## What is real and what is simulated
 
@@ -138,12 +154,6 @@ Attribution text for real data: "Contains Traffic Signal Volume Data from the De
 - The demo page has not been opened in a browser. No map is shown, because no site-locations file has been joined.
 - The reading schema carries no alarm field, so detector health uses missing intervals only.
 - Forecasts are two simple baselines, not a trained model.
-
-## How AI was used and verified
-
-I used Claude Code for drafting code, writing tests, writing docs. I wrote the goal and acceptance check first, read every change, ran the tests and made every commit myself. Every number in this repo comes from a run I did, and each one is labelled as measured, estimated or simulated.
-
-What I checked: tests, linting, edge cases, package licences from metadata, no credentials in the committed files. Where the tool was wrong, and what I changed, is in [`docs/ai-log.md`](docs/ai-log.md).
 
 ## Licence
 

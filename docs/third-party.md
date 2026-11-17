@@ -219,3 +219,6 @@ Data sources and their licences are in [data.md](data.md). No map tiles are used
 | --- | --- | --- |
 | `docs/media/architecture.svg` | hand-written SVG in this repo | MIT, as the rest of the repo |
 | `docs/media/hero-isometric.svg` | made with Claude (Anthropic) for this repo; no third-party artwork. It carries a signed C2PA content-credentials manifest (`<metadata>`) that records this. | MIT, as the rest of the repo |
+| `docs/media/demo-page-real-october-2026.png` | screenshot of this repo's demo page (headless Chrome, 2026-11-17); shows aggregates of the real October 2026 data | screenshot: MIT; the data shown: CC BY 4.0, Department of Transport and Planning (Victoria) |
+| `docs/media/grafana-real-replay.png` | screenshot of Grafana 12.2.0 showing this repo's dashboard | screenshot: MIT; Grafana's licence: not checked |
+| `docs/media/dagster-asset-graph.png` | screenshot of the Dagster UI (dagster-webserver 1.13.26) showing this repo's assets | screenshot: MIT; Dagster's licence is listed with the Python packages above |

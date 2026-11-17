@@ -1,36 +1,74 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 330" role="img" aria-labelledby="t d">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" role="img" aria-labelledby="t d">
   <title id="t">mini-city-brain architecture</title>
-  <desc id="d">A replay client posts readings to a FastAPI service, which publishes valid readings to a queue. A worker reads the queue and writes newline-delimited JSON files to object storage; bad messages go to a dead-letter queue. A loader fills DuckDB, dbt builds and tests the models, and a Dagster job runs the loader, dbt and the checks. A forecast reads the models. Prometheus and Grafana watch the API and the worker.</desc>
+  <desc id="d">A replay client posts readings to a FastAPI service, which publishes valid readings to a queue on a local AWS emulator. A worker reads the queue and writes newline-delimited JSON files to a raw bucket; messages that fail three times go to a dead-letter queue. A Dagster job loads the files into DuckDB, runs the dbt models and tests, and stops on bad data. A baseline forecast API and the static page read the models. Prometheus and Grafana collect metrics from the API and the worker.</desc>
   <defs>
     <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#444"/></marker>
     <style>
-      .b { fill:#eef4fb; stroke:#2b5d9b; stroke-width:1.5; rx:6; }
-      .q { fill:#fff5e5; stroke:#a05a00; stroke-width:1.5; rx:6; }
-      .d { fill:#fdeceb; stroke:#a8322b; stroke-width:1.5; rx:6; }
-      .o { fill:#eef7ee; stroke:#2f7d32; stroke-width:1.5; rx:6; }
-      text { font: 14px system-ui, sans-serif; fill:#1b1f23; }
-      .s { font-size: 11px; fill:#555; }
-      line, path.l { stroke:#444; stroke-width:1.5; fill:none; marker-end:url(#a); }
+      .b { fill:#eef4fb; stroke:#2b5d9b; stroke-width:1.5; }
+      .q { fill:#fff5e5; stroke:#a05a00; stroke-width:1.5; }
+      .d { fill:#fdeceb; stroke:#a8322b; stroke-width:1.5; }
+      .o { fill:#eef7ee; stroke:#2f7d32; stroke-width:1.5; }
+      .frame { fill:#f7f8fa; stroke:#6b7785; stroke-width:1.2; stroke-dasharray:6 4; }
+      text { font: 15px system-ui, -apple-system, "Segoe UI", sans-serif; fill:#1b1f23; text-anchor:middle; }
+      .s { font-size: 12px; fill:#555; }
+      .h { font-size: 14px; font-weight:600; text-anchor:start; }
+      .hs { font-size: 12px; fill:#555; text-anchor:start; }
+      .l { stroke:#444; stroke-width:1.5; fill:none; marker-end:url(#a); }
+      .both { marker-start:url(#a); }
       .dash { stroke-dasharray:5 4; }
     </style>
   </defs>
-  <rect width="900" height="330" fill="#ffffff"/>
-  <rect class="b" x="20" y="40" width="130" height="54"/><text x="85" y="63" text-anchor="middle">Replay client</text><text class="s" x="85" y="80" text-anchor="middle">synthetic or SCATS file</text>
-  <rect class="b" x="190" y="40" width="120" height="54"/><text x="250" y="63" text-anchor="middle">FastAPI</text><text class="s" x="250" y="80" text-anchor="middle">validates readings</text>
-  <rect class="q" x="350" y="40" width="120" height="54"/><text x="410" y="63" text-anchor="middle">Ingest queue</text><text class="s" x="410" y="80" text-anchor="middle">local AWS emulator</text>
-  <rect class="b" x="510" y="40" width="110" height="54"/><text x="565" y="63" text-anchor="middle">Worker</text><text class="s" x="565" y="80" text-anchor="middle">batches by count/time</text>
-  <rect class="o" x="660" y="40" width="130" height="54"/><text x="725" y="63" text-anchor="middle">Raw bucket</text><text class="s" x="725" y="80" text-anchor="middle">ndjson by date</text>
-  <rect class="d" x="350" y="140" width="120" height="46"/><text x="410" y="160" text-anchor="middle">Dead-letter queue</text><text class="s" x="410" y="176" text-anchor="middle">after 3 failed receives</text>
-  <rect class="b" x="660" y="140" width="130" height="46"/><text x="725" y="160" text-anchor="middle">Loader</text><text class="s" x="725" y="176" text-anchor="middle">manifest, idempotent</text>
-  <rect class="o" x="660" y="230" width="130" height="46"/><text x="725" y="250" text-anchor="middle">DuckDB</text><text class="s" x="725" y="266" text-anchor="middle">raw + dbt models</text>
-  <rect class="b" x="480" y="230" width="140" height="46"/><text x="550" y="250" text-anchor="middle">dbt models + tests</text><text class="s" x="550" y="266" text-anchor="middle">staging, marts</text>
-  <rect class="b" x="270" y="230" width="160" height="46"/><text x="350" y="250" text-anchor="middle">Dagster job + checks</text><text class="s" x="350" y="266" text-anchor="middle">blocking: stops on bad data</text>
-  <rect class="b" x="60" y="230" width="160" height="46"/><text x="140" y="250" text-anchor="middle">Baseline forecast</text><text class="s" x="140" y="266" text-anchor="middle">API + static page</text>
-  <rect class="b" x="60" y="140" width="190" height="46"/><text x="155" y="160" text-anchor="middle">Prometheus + Grafana</text><text class="s" x="155" y="176" text-anchor="middle">API and worker metrics</text>
-  <line x1="150" y1="67" x2="188" y2="67"/><line x1="310" y1="67" x2="348" y2="67"/><line x1="470" y1="67" x2="508" y2="67"/><line x1="620" y1="67" x2="658" y2="67"/>
-  <line class="dash" x1="410" y1="94" x2="410" y2="138"/>
-  <line x1="725" y1="94" x2="725" y2="138"/><line x1="725" y1="186" x2="725" y2="228"/>
-  <line x1="660" y1="253" x2="622" y2="253"/><line class="dash" x1="430" y1="253" x2="480" y2="253"/>
-  <line x1="270" y1="253" x2="222" y2="253"/>
-  <line class="dash" x1="250" y1="94" x2="200" y2="138"/><line class="dash" x1="510" y1="80" x2="250" y2="150"/>
+  <rect width="960" height="560" fill="#ffffff"/>
+
+  <!-- Metrics: one wide box above the services it watches -->
+  <rect class="b" x="210" y="20" width="530" height="48" rx="6"/>
+  <text x="475" y="41">Prometheus + Grafana</text>
+  <text class="s" x="475" y="58">metrics from the API and the worker</text>
+
+  <!-- Ingestion row -->
+  <rect class="b" x="20" y="110" width="150" height="60" rx="6"/>
+  <text x="95" y="135">Replay client</text><text class="s" x="95" y="154">synthetic or SCATS file</text>
+  <rect class="b" x="210" y="110" width="150" height="60" rx="6"/>
+  <text x="285" y="135">FastAPI</text><text class="s" x="285" y="154">validates readings</text>
+  <rect class="q" x="400" y="110" width="150" height="60" rx="6"/>
+  <text x="475" y="135">Ingest queue</text><text class="s" x="475" y="154">local AWS emulator</text>
+  <rect class="b" x="590" y="110" width="150" height="60" rx="6"/>
+  <text x="665" y="135">Worker</text><text class="s" x="665" y="154">batches, then writes</text>
+  <rect class="o" x="780" y="110" width="150" height="60" rx="6"/>
+  <text x="855" y="135">Raw bucket</text><text class="s" x="855" y="154">ndjson by date</text>
+
+  <path class="l" d="M170,140 H208"/>
+  <path class="l" d="M360,140 H398"/>
+  <path class="l" d="M550,140 H588"/>
+  <path class="l" d="M740,140 H778"/>
+
+  <!-- Metrics scrape: straight up -->
+  <path class="l dash" d="M285,110 V70"/>
+  <path class="l dash" d="M665,110 V70"/>
+
+  <!-- Dead-letter queue: straight down from the queue -->
+  <rect class="d" x="400" y="225" width="150" height="60" rx="6"/>
+  <text x="475" y="250">Dead-letter queue</text><text class="s" x="475" y="269">after 3 failed receives</text>
+  <path class="l dash" d="M475,170 V223"/>
+
+  <!-- Dagster job frame around load, DuckDB and dbt -->
+  <rect class="frame" x="575" y="205" width="370" height="250" rx="10"/>
+  <text class="h" x="592" y="230">Dagster job</text>
+  <text class="hs" x="592" y="248">load, dbt build, blocking checks</text>
+
+  <rect class="b" x="780" y="262" width="150" height="60" rx="6"/>
+  <text x="855" y="287">Loader</text><text class="s" x="855" y="306">manifest, idempotent</text>
+  <rect class="o" x="780" y="375" width="150" height="60" rx="6"/>
+  <text x="855" y="400">DuckDB</text><text class="s" x="855" y="419">raw tables + models</text>
+  <rect class="b" x="590" y="375" width="150" height="60" rx="6"/>
+  <text x="665" y="400">dbt models + tests</text><text class="s" x="665" y="419">staging and marts</text>
+
+  <path class="l" d="M855,170 V260"/>
+  <path class="l" d="M855,322 V373"/>
+  <path class="l both" d="M742,405 H778"/>
+
+  <!-- Readers of the models -->
+  <rect class="b" x="780" y="485" width="150" height="60" rx="6"/>
+  <text x="855" y="510">Baseline forecast</text><text class="s" x="855" y="529">API and static page</text>
+  <path class="l" d="M855,435 V483"/>
 </svg>
