@@ -148,7 +148,10 @@ def make_dbt_assets(manifest_path: Path) -> dg.AssetsDefinition:
     def mcb_dbt(
         context: AssetExecutionContext, dbt: DbtCliResource, settings: PipelineSettings
     ) -> Any:
-        target = Path(settings.dbt_target_path) if settings.dbt_target_path else None
+        # dbt runs with transform/ as its working directory, so every path it gets must be
+        # absolute, or it lands under transform/ instead of where the loader wrote (D35).
+        os.environ["DUCKDB_PATH"] = str(Path(settings.db_path).resolve())
+        target = Path(settings.dbt_target_path).resolve() if settings.dbt_target_path else None
         args = [
             "build",
             "--vars",
@@ -184,6 +187,7 @@ def parse_manifest(target_path: Path) -> Path:
     """Run `dbt parse` (no database access needed for the manifest) and return its path."""
     from dbt.cli.main import dbtRunner
 
+    target_path = Path(target_path).resolve()  # dbt resolves relative paths from transform/
     target_path.mkdir(parents=True, exist_ok=True)
     os.environ.setdefault("DUCKDB_PATH", str(Path(tempfile.gettempdir()) / "mcb_parse.duckdb"))
     res = dbtRunner().invoke(

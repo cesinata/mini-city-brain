@@ -1,7 +1,7 @@
 variable "endpoint_url" {
   description = "URL of the local AWS emulator. Inside compose this is http://emulator:5000."
   type        = string
-  default     = "http://localhost:5000"
+  default     = "http://127.0.0.1:5050"
 }
 
 variable "region" {

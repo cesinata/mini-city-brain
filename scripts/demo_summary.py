@@ -13,9 +13,14 @@ from services.common.aws import s3_client
 from services.common.config import Settings
 
 
-def main(replay_json: str, pipeline_txt: str) -> int:
+def read_replay_summary(replay_json: str) -> dict:
+    """The "summary" block that `python -m ingest.replay` prints last."""
     text = Path(replay_json).read_text()
-    summary = json.loads(text[text.index('{\n  "summary"') :])["summary"]
+    return json.loads(text[text.index('{\n  "summary"') :])["summary"]
+
+
+def main(replay_json: str, pipeline_txt: str) -> int:
+    summary = read_replay_summary(replay_json)
     settings = Settings.from_env()
     listing = s3_client(settings).list_objects_v2(Bucket=settings.raw_bucket, Prefix="raw/scats/")
     objects = listing.get("KeyCount", 0)

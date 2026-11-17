@@ -21,7 +21,7 @@ class Settings:
     @classmethod
     def from_env(cls) -> Settings:
         return cls(
-            endpoint_url=os.environ.get("AWS_ENDPOINT_URL", "http://localhost:5000"),
+            endpoint_url=os.environ.get("AWS_ENDPOINT_URL", "http://127.0.0.1:5050"),
             region=os.environ.get("AWS_DEFAULT_REGION", "ap-southeast-2"),
             raw_bucket=os.environ.get("RAW_BUCKET", "mcb-raw-readings"),
             curated_bucket=os.environ.get("CURATED_BUCKET", "mcb-curated-exports"),

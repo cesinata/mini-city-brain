@@ -99,6 +99,25 @@ def test_cli_exit_codes_and_message(tmp_path, monkeypatch, capsys):
     assert "check:" in out and "asset:" in out and "why:" in out
 
 
+def test_cli_with_relative_paths_keeps_dbt_and_the_loader_on_one_database(
+    tmp_path, monkeypatch, capsys
+):
+    """make demo passes relative paths; dbt runs from transform/ and must still use them (D35)."""
+    transform_data = Path(__file__).resolve().parent.parent / "transform" / "data"
+    before = sorted(transform_data.rglob("*")) if transform_data.exists() else []
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("DUCKDB_PATH", raising=False)
+    monkeypatch.setenv("DBT_TARGET_PATH", "data/dbt_target")
+    (tmp_path / "data" / "warehouse").mkdir(parents=True)
+    assert main(["--source", "synthetic", "--db", "data/warehouse/mcb.duckdb"]) == 0
+    assert "PIPELINE OK" in capsys.readouterr().out
+    assert (tmp_path / "data" / "dbt_target" / "manifest.json").exists()
+    db = str(tmp_path / "data" / "warehouse" / "mcb.duckdb")
+    assert query(db, "select count(*) from main.fct_volume_15min")[0][0] == 2 * 2 * 96
+    after = sorted(transform_data.rglob("*")) if transform_data.exists() else []
+    assert after == before, "dbt wrote files under transform/data"
+
+
 # ---- the check functions on their own ------------------------------------------------------
 
 

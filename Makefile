@@ -22,8 +22,9 @@ up:
 	$(COMPOSE) up -d --build
 	bash scripts/wait_for_health.sh
 
+# Stops every service, including the optional obs profile, and keeps volumes.
 down:
-	$(COMPOSE) down
+	$(COMPOSE) --profile obs down
 
 # Replay synthetic data into a running stack. Override DAYS, SITES or SPEED if needed.
 DAYS  ?= 1

@@ -39,3 +39,29 @@ def test_api_bind_mounts_the_folder_demo_writes_to():
 
 def test_no_named_warehouse_volume_remains():
     assert "warehouse" not in (_compose().get("volumes") or {})
+
+
+# Files that reach the emulator from the host, and the text before the URL in each.
+HOST_ENDPOINTS = {
+    "scripts/demo.sh": r"AWS_ENDPOINT_URL=(\S+)",
+    "scripts/demo_bad.sh": r"AWS_ENDPOINT_URL=(\S+)",
+    "env.example": r"AWS_ENDPOINT_URL=(\S+)",
+    ".github/workflows/ci.yml": r"AWS_ENDPOINT_URL:\s*(\S+)",
+    "services/common/config.py": r'"AWS_ENDPOINT_URL",\s*"([^"]+)"',
+    "infra/terraform/variables.tf": r'default\s*=\s*"(http[^"]+)"',
+}
+
+
+def test_host_side_endpoints_use_the_published_emulator_port():
+    ports = _compose()["services"]["emulator"]["ports"]
+    assert len(ports) == 1
+    host_ip, host_port, container_port = ports[0].split(":")
+    assert host_ip == "127.0.0.1"
+    # macOS AirPlay Receiver listens on 5000 on every address (decisions D34).
+    assert host_port != "5000"
+    expected = f"http://127.0.0.1:{host_port}"
+    for path, pattern in HOST_ENDPOINTS.items():
+        found = re.findall(pattern, (ROOT / path).read_text())
+        assert found, f"no emulator URL found in {path}"
+        assert set(found) == {expected}, f"{path}: {found} != {expected}"
+    assert container_port == "5000"

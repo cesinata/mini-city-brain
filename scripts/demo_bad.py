@@ -4,7 +4,7 @@ What it does (needs the compose stack running):
   1. Builds one batch with deliberate faults: a negative volume, a gap of 20 missing intervals
      and, because it sends the same batch twice, duplicates across requests.
   2. Posts the batch twice to the API and prints what the API rejected and why.
-  3. Waits for the worker to write the objects, then runs the pipeline on the bucket.
+  3. Waits until the bucket holds every accepted reading, then runs the pipeline on it.
   4. Exits non-zero and prints which check failed, on which asset, and why.
 
 Rejected readings also show in Grafana (mcb_api_readings_rejected_total).
@@ -15,7 +15,6 @@ from __future__ import annotations
 import json
 import os
 import sys
-import time
 from collections.abc import Callable, Sequence
 from datetime import timedelta
 from pathlib import Path
@@ -24,6 +23,9 @@ import httpx
 
 from ingest.synthetic import DEFAULT_START
 from orchestration.run import main as run_pipeline_cli
+from scripts.smoke_assert import raw_reading_count, wait_for_readings
+from services.common.aws import s3_client
+from services.common.config import Settings
 
 SITE = "9001"
 
@@ -57,19 +59,15 @@ def post_twice(client: httpx.Client, api_url: str, batch: list[dict]) -> list[di
     return out
 
 
-def wait_for_objects(wait: int) -> bool:
-    from services.common.aws import s3_client
-    from services.common.config import Settings
-
+def raw_readings_now() -> int:
+    """Readings already in the raw bucket, for example from an earlier `make demo`."""
     settings = Settings.from_env()
-    s3 = s3_client(settings)
-    deadline = time.monotonic() + wait
-    while time.monotonic() < deadline:
-        listing = s3.list_objects_v2(Bucket=settings.raw_bucket, Prefix="raw/scats/")
-        if listing.get("KeyCount", 0) >= 2:
-            return True
-        time.sleep(2)
-    return False
+    return raw_reading_count(s3_client(settings), settings.raw_bucket)
+
+
+def wait_for_readings_in_bucket(expected: int, wait: float) -> bool:
+    """Wait until the worker has written every accepted reading (decisions D36)."""
+    return wait_for_readings(Settings.from_env(), expected, wait) >= expected
 
 
 def main(
@@ -83,16 +81,18 @@ def main(
     Path(db).unlink(missing_ok=True)
     print("demo-bad: sending a batch with a gap, a negative value and a duplicate send")
     batch = faulty_readings()
+    before = raw_readings_now()
     own = client is None
     client = client or httpx.Client()
     try:
-        post_twice(client, api_url, batch)
+        responses = post_twice(client, api_url, batch)
     finally:
         if own:
             client.close()
+    accepted = sum(int(body.get("accepted") or 0) for body in responses)
     if after_post is not None:
         after_post()  # tests use this to run the worker in-process
-    if wait and not wait_for_objects(wait):
+    if wait and not wait_for_readings_in_bucket(before + accepted, wait):
         print("demo-bad: the worker did not write the objects in time", file=sys.stderr)
         return 2
     print("demo-bad: running the pipeline on what reached the bucket")
