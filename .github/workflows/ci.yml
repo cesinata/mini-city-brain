@@ -71,7 +71,7 @@ jobs:
       - name: Create the warehouse folder the api bind-mounts
         run: mkdir -p data/warehouse
       - run: docker compose up -d --build
-      - run: bash scripts/wait_for_health.sh http://localhost:8000/health 180
+      - run: bash scripts/wait_for_health.sh http://127.0.0.1:8000/health 180
       - name: Replay 1 synthetic day for 2 sites
         run: python -m ingest.replay --synthetic --days 1 --sites 2 --speed 0 --clean
       - name: Assert objects exist and the dead-letter queue is empty

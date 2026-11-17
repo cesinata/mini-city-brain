@@ -12,7 +12,7 @@ export AWS_DEFAULT_REGION=ap-southeast-2
 export DBT_TARGET_PATH="${DBT_TARGET_PATH:-data/dbt_target}"
 mkdir -p data/warehouse data/demo
 docker compose --profile obs up -d --build
-bash scripts/wait_for_health.sh http://localhost:8000/health 180
+bash scripts/wait_for_health.sh http://127.0.0.1:8000/health 180
 "$PY" -m ingest.replay --synthetic --days 2 --sites 5 --detectors 2 --speed 0 --clean \
   | tee data/demo/replay.json
 ACCEPTED="$("$PY" -c 'import sys; from scripts.demo_summary import read_replay_summary as r; print(r(sys.argv[1])["accepted"])' data/demo/replay.json)"

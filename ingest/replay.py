@@ -153,7 +153,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     src = p.add_mutually_exclusive_group(required=True)
     src.add_argument("--synthetic", action="store_true", help="generate synthetic data")
     src.add_argument("--file", type=Path, help="SCATS CSV or monthly ZIP on this machine")
-    p.add_argument("--api-url", default="http://localhost:8000")
+    p.add_argument("--api-url", default="http://127.0.0.1:8000")
     p.add_argument(
         "--speed", type=float, default=60, help="60 = 1 hour of data per minute; 0 = max"
     )
@@ -164,7 +164,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     p.add_argument("--seed", type=int, default=synthetic.DEFAULT_SEED)
     p.add_argument("--clean", action="store_true", help="synthetic data without injected faults")
     p.add_argument(
-        "--tz", default="AEST", help="AEST (fixed +10) or a zone such as Australia/Melbourne"
+        "--tz",
+        default=scats.DEFAULT_TZ,
+        help="time zone of the file's intervals; default Australia/Melbourne (wall clock, "
+        "daylight saving included); AEST means fixed +10",
     )
     p.add_argument(
         "--top-sites",

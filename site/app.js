@@ -75,7 +75,7 @@ function mix(t) {
 
 function renderHeatmap(s) {
   const hm = s.heatmap;
-  $("heat-note").textContent = `${hm.unit}. Local time is read as AEST (UTC+10).`;
+  $("heat-note").textContent = `${hm.unit}. Local time is Melbourne time, daylight saving included.`;
   const flat = hm.values.flat().filter((v) => v !== null);
   const max = Math.max(1, ...flat);
   const cell = 28, left = 40, top = 22;

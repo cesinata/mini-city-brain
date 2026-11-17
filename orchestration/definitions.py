@@ -49,6 +49,7 @@ class PipelineSettings(dg.ConfigurableResource):
     max_lag_hours: float = float(os.environ.get("PIPELINE_MAX_LAG_HOURS", "48"))
     max_duplicate_rate: float = 0.01
     min_completeness: float = 0.9
+    max_incomplete_share: float = 0.01  # share of detector-days allowed below it (D45)
     dbt_target_path: str = ""  # where dbt writes its manifest and logs; empty = project default
 
     def clock(self) -> datetime:
@@ -140,7 +141,9 @@ def duplicate_check(settings: PipelineSettings) -> dg.AssetCheckResult:
 
 @dg.asset_check(asset=HEALTH_ASSET, blocking=True, name="completeness")
 def completeness_check(settings: PipelineSettings) -> dg.AssetCheckResult:
-    return _run_check(settings, checks.completeness, settings.min_completeness)
+    return _run_check(
+        settings, checks.completeness, settings.min_completeness, settings.max_incomplete_share
+    )
 
 
 def make_dbt_assets(manifest_path: Path) -> dg.AssetsDefinition:
@@ -156,7 +159,8 @@ def make_dbt_assets(manifest_path: Path) -> dg.AssetsDefinition:
             "build",
             "--vars",
             f"{{max_duplicate_rate: {settings.max_duplicate_rate}, "
-            f"min_completeness: {settings.min_completeness}}}",
+            f"min_completeness: {settings.min_completeness}, "
+            f"max_incomplete_share: {settings.max_incomplete_share}}}",
         ]
         yield from dbt.cli(args, context=context, target_path=target).stream()
 

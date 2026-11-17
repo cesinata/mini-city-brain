@@ -76,7 +76,7 @@ def main(
     wait: int = 40,
     after_post: Callable[[], None] | None = None,
 ) -> int:
-    api_url = os.environ.get("API_URL", "http://localhost:8000")
+    api_url = os.environ.get("API_URL", "http://127.0.0.1:8000")
     db = os.environ.get("DEMO_BAD_DB", "data/warehouse/demo_bad.duckdb")
     Path(db).unlink(missing_ok=True)
     print("demo-bad: sending a batch with a gap, a negative value and a duplicate send")

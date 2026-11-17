@@ -149,6 +149,17 @@ def test_real_data_label_is_measured(tmp_path):
     assert result["label"] == "measured (host CPU)"
 
 
+def test_result_names_the_local_days_the_data_covers():
+    end = datetime(2026, 10, 31, 13, 0)  # V95 of 31 Oct 2026 ends at local midnight (AEDT)
+    first = datetime(2026, 9, 30, 14, 15)  # V00 of 1 Oct 2026 ends 00:15 AEST
+    period = evaluate.data_period({"1": {first: 1.0, end: 2.0}})
+    assert period == {
+        "first_day": "2026-10-01",
+        "last_day": "2026-10-31",
+        "time_zone": "Australia/Melbourne",
+    }
+
+
 def test_store_sums_detectors_per_site(tmp_path):
     db = make_db(tmp_path / "w.duckdb", weeks=1, sites=("1",))
     con = duckdb.connect(db)

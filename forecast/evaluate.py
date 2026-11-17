@@ -14,12 +14,15 @@ import argparse
 import json
 import sys
 from collections.abc import Mapping, Sequence
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import duckdb
 
 from forecast import baselines, store
+
+LOCAL_TZ = "Australia/Melbourne"  # the zone the source files use (decisions D43)
 
 
 def split_series(series: Mapping[datetime, float], holdout_days: int):
@@ -72,6 +75,20 @@ def evaluate_series(
     return {"holdout_days": holdout_days, "sites_evaluated": sites_used, "methods": methods}
 
 
+def data_period(series: Mapping[str, Mapping[datetime, float]], tz: str = LOCAL_TZ) -> dict:
+    """First and last local day that the readings cover (interval starts, Melbourne time)."""
+    ends = [t for points in series.values() for t in points]
+    if not ends:
+        return {"first_day": None, "last_day": None}
+    zone = ZoneInfo(tz)
+
+    def local_day(end: datetime) -> str:
+        start = (end if end.tzinfo else end.replace(tzinfo=UTC)) - timedelta(minutes=15)
+        return start.astimezone(zone).date().isoformat()
+
+    return {"first_day": local_day(min(ends)), "last_day": local_day(max(ends)), "time_zone": tz}
+
+
 def run(
     db_path: str, out_path: Path, holdout_days: int = 7, data_source: str | None = None
 ) -> dict:
@@ -86,6 +103,7 @@ def run(
     finally:
         con.close()
     result = evaluate_series(series, holdout_days)
+    result["data_period_local"] = data_period(series)
     result["data_source"] = data_source
     result["label"] = "simulated" if data_source == "synthetic" else "measured (host CPU)"
     result["units"] = "vehicles per 15-minute interval per site (sum over detectors)"

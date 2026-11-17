@@ -3,7 +3,7 @@ from __future__ import annotations
 import csv
 import json
 import zipfile
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 import httpx
@@ -48,14 +48,24 @@ def test_faults_are_injected():
     assert len(keys) == len(set(keys)) + 1, "exactly one duplicate row"
     assert any(r["CT_RECORDS"] != "96" for r in rows), "missing intervals"
     assert any(int(r["CT_ALARM_24HOUR"]) > 10 for r in rows), "alarm-heavy detector"
-    negatives = [c for r in rows for c in synthetic.VOLUME_COLUMNS if r[c].startswith("-")]
-    assert len(negatives) == 1
+    values = [r[c] for r in rows for c in synthetic.VOLUME_COLUMNS]
+    assert values.count("-5") == 1, "one bad negative value"
+    assert values.count(synthetic.MISSING) == 24, "two 12-interval gaps, marked -1"
+    assert "" not in values, "the real files have no blanks"
 
 
-def test_ct_records_matches_non_blank_intervals():
+def test_ct_records_counts_intervals_that_are_not_missing():
     for row in synthetic.generate(3, 2, 3):
-        present = sum(1 for c in synthetic.VOLUME_COLUMNS if row[c] != "")
+        present = sum(1 for c in synthetic.VOLUME_COLUMNS if row[c] != synthetic.MISSING)
         assert int(row["CT_RECORDS"]) == present
+
+
+def test_generator_marks_the_clock_gap_like_the_real_file():
+    rows = synthetic.generate(1, 1, 2, start=date(2026, 10, 3), faults=False)
+    sat, sun = rows
+    assert all(sat[c] != synthetic.MISSING for c in synthetic.VOLUME_COLUMNS)
+    gap = [c for c in synthetic.VOLUME_COLUMNS if sun[c] == synthetic.MISSING]
+    assert gap == ["V07", "V08", "V09", "V10", "V11"]
 
 
 def test_weekday_has_morning_and_evening_peaks():
@@ -110,11 +120,46 @@ def test_v00_maps_to_the_first_interval_and_v95_to_the_last(tmp_path):
     row = dict.fromkeys(synthetic.COLUMNS, "")
     row.update(NB_SCATS_SITE="5", NB_DETECTOR="2", QT_INTERVAL_COUNT="2026-03-02", V00="7", V95="9")
     stats = scats.ReadStats()
-    out = list(scats.unpivot(iter([row]), stats))
+    out = list(scats.unpivot(iter([row]), stats, tz="AEST"))
     by_volume = {r["volume"]: r["interval_end"] for r in out}
     assert by_volume[7] == "2026-03-01T14:15:00+00:00"
     assert by_volume[9] == "2026-03-02T14:00:00+00:00"
     assert stats.blank_intervals == 94
+
+
+def test_default_zone_is_melbourne_wall_clock():
+    row = dict.fromkeys(synthetic.COLUMNS, "")
+    row.update(NB_SCATS_SITE="5", NB_DETECTOR="2", QT_INTERVAL_COUNT="2026-03-02", V00="7")
+    out = next(scats.unpivot(iter([row]), scats.ReadStats()))
+    assert out["interval_end"] == "2026-03-01T13:15:00+00:00"  # 00:15 AEDT (+11)
+
+
+def test_minus_one_is_a_missing_interval_and_other_negatives_pass_through():
+    row = dict.fromkeys(synthetic.COLUMNS, "0")
+    row.update(NB_SCATS_SITE="5", NB_DETECTOR="2", QT_INTERVAL_COUNT="2026-10-01")
+    row.update(V00="-1", V01="-1", V02="-5")
+    stats = scats.ReadStats()
+    out = list(scats.unpivot(iter([row]), stats))
+    assert stats.missing_intervals == 2
+    assert len(out) == 94
+    assert [r["volume"] for r in out if r["volume"] < 0] == [-5]  # left for the API to reject
+
+
+def test_clock_gap_intervals_are_skipped_and_days_join_without_overlap():
+    """4 Oct 2026: Melbourne clocks go from 02:00 to 03:00. The real file has -1 for V07-V11."""
+    rows = []
+    for day in ("2026-10-03", "2026-10-04", "2026-10-05"):
+        row = dict.fromkeys(synthetic.COLUMNS, "1")
+        row.update(NB_SCATS_SITE="5", NB_DETECTOR="2", QT_INTERVAL_COUNT=day)
+        rows.append(row)
+    stats = scats.ReadStats()
+    ends = [datetime.fromisoformat(r["interval_end"]) for r in scats.unpivot(iter(rows), stats)]
+    assert stats.nonexistent_local_times == 4  # V08-V11 start at 02:00-02:45, which never occur
+    assert len(ends) == 3 * 96 - 4
+    steps = {(b - a).total_seconds() for a, b in zip(ends, ends[1:], strict=False)}
+    assert steps == {900.0}, "continuous 15-minute steps: no gap, no overlap"
+    assert ends[96 + 7] == datetime(2026, 10, 3, 16, 0, tzinfo=UTC)  # V07 ends as clocks jump
+    assert ends[96 + 8] == datetime(2026, 10, 3, 16, 15, tzinfo=UTC)  # V12 ends 03:15 AEDT
 
 
 def test_melbourne_zone_applies_daylight_saving(tmp_path):
@@ -127,13 +172,30 @@ def test_melbourne_zone_applies_daylight_saving(tmp_path):
     assert local == "2026-01-14T13:15:00+00:00"  # +11 in summer
 
 
-def test_blank_intervals_produce_no_reading_and_negatives_pass_through():
+def test_missing_intervals_produce_no_reading_and_negatives_pass_through():
     rows = synthetic.generate(3, 2, 3, faults=True)
     stats = scats.ReadStats()
     out = list(scats.unpivot(iter(rows), stats))
-    assert stats.blank_intervals > 0
-    assert any(r["volume"] < 0 for r in out)  # left for the API to reject
-    assert len(out) + stats.blank_intervals == len(rows) * 96
+    assert stats.missing_intervals == 24
+    assert [r["volume"] for r in out if r["volume"] < 0] == [-5]  # left for the API to reject
+    assert len(out) + stats.missing_intervals == len(rows) * 96
+
+
+def test_monthly_zip_has_one_file_per_day_and_reads_like_the_csv(tmp_path):
+    rows = synthetic.generate(2, 2, 3, faults=False)
+    synthetic.write_csv(rows, tmp_path / "all.csv")
+    synthetic.write_zip(rows, tmp_path / "month.zip")
+    with zipfile.ZipFile(tmp_path / "month.zip") as zf:
+        assert sorted(zf.namelist()) == [
+            "VSDATA_20260302.csv",
+            "VSDATA_20260303.csv",
+            "VSDATA_20260304.csv",
+        ]
+        assert zf.read("VSDATA_20260302.csv").startswith(b"NB_SCATS_SITE,QT_INTERVAL_COUNT,")
+    a, _ = scats.read_readings(tmp_path / "all.csv")
+    b, stats = scats.read_readings(tmp_path / "month.zip")
+    assert a == b
+    assert len(stats.files) == 3
 
 
 def test_csv_and_zip_give_the_same_readings(tmp_path):

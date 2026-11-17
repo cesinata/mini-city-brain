@@ -3,12 +3,19 @@
 One input row is one detector on one day with 96 volume columns (V00 to V95). One output
 reading is one detector in one 15-minute interval, with `interval_end` in UTC.
 
-The real file layout has not been seen on this machine (docs/data.md, "Not yet known"), so this
-reader is defensive: it logs what it finds, skips rows it cannot read and counts them.
+Checked against a real monthly file (October 2026, docs/data.md and decisions D43):
 
-Time zone (docs/decisions.md D24): the data dictionary says "Australian Eastern Standard
-Time". By default that is read literally as a fixed UTC+10 offset with no daylight saving.
-Pass `tz="Australia/Melbourne"` to treat it as local clock time instead.
+* A monthly ZIP holds one CSV per day, `VSDATA_YYYYMMDD.csv`, every one with the published header.
+* `QT_INTERVAL_COUNT` is a plain date (`2026-10-01`).
+* A missing interval is `-1`, not a blank. It produces no reading and is counted. Any other
+  negative value is passed through, so the API rejects it and says why.
+* The 96 intervals follow Melbourne wall-clock time, daylight saving included, so the default
+  zone is `Australia/Melbourne`. On the day clocks go forward, intervals that start inside the
+  clock gap (V08 to V11) are skipped and counted; the real file has `-1` for V07 to V11 there.
+  `tz="AEST"` reads them as a fixed UTC+10 offset instead, as the data dictionary's wording
+  suggests.
+
+The reader stays defensive: it logs what it finds, skips rows it cannot read and counts them.
 """
 
 from __future__ import annotations
@@ -28,6 +35,8 @@ from zoneinfo import ZoneInfo
 log = logging.getLogger("mcb.ingest.scats")
 
 AEST = timezone(timedelta(hours=10), "AEST")
+DEFAULT_TZ = "Australia/Melbourne"
+MISSING = -1  # how the real files mark an interval with no data
 V_COLUMN = re.compile(r"^V(\d{2})$")
 DATE_FORMATS = ("%Y-%m-%d", "%d/%m/%Y", "%Y-%m-%d %H:%M:%S", "%d/%m/%Y %H:%M", "%d/%m/%Y %H:%M:%S")
 
@@ -50,6 +59,8 @@ class ReadStats:
     skip_reasons: dict[str, int] = field(default_factory=dict)
     readings: int = 0
     blank_intervals: int = 0
+    missing_intervals: int = 0  # value -1
+    nonexistent_local_times: int = 0  # intervals that fall in the clock gap of a DST change
     unreadable_values: int = 0
 
     def skip(self, reason: str) -> None:
@@ -107,30 +118,44 @@ def read_rows(path: Path, stats: ReadStats | None = None) -> Iterator[dict[str, 
     )
 
 
-def interval_end_utc(day: date, index: int, tz: timezone | ZoneInfo) -> datetime:
+def _wall(day: date, minutes: int) -> datetime:
+    return datetime(day.year, day.month, day.day) + timedelta(minutes=minutes)
+
+
+def _exists(naive: datetime, tz: timezone | ZoneInfo) -> bool:
+    """False for a wall-clock time inside the gap when clocks go forward."""
+    aware = naive.replace(tzinfo=tz)
+    return aware.astimezone(UTC).astimezone(tz).replace(tzinfo=None) == naive
+
+
+def interval_end_utc(day: date, index: int, tz: timezone | ZoneInfo) -> datetime | None:
     """End of interval `index` (0 for V00) on local calendar day `day`, in UTC.
 
-    V00 covers 00:00 to 00:15 local time, so its end is 00:15 local. V95 ends at midnight
-    local, which is the start of the next day. The mapping counts elapsed time from local
-    midnight, so on a daylight-saving change day (only with a Melbourne zone) the index follows
-    elapsed time, not the wall clock.
+    The index follows the wall clock: V00 starts at 00:00 local, V95 ends at the next local
+    midnight. Each interval lasts 15 minutes of real time from its start. Returns None when the
+    start does not exist on the clock (02:00 to 02:45 on the day daylight saving starts). When
+    clocks go back, the repeated hour is read as its first occurrence (fold 0); a real file
+    around that change has not been checked yet.
     """
-    midnight = datetime(day.year, day.month, day.day, tzinfo=tz).astimezone(UTC)
-    return midnight + timedelta(minutes=15 * (index + 1))
+    start = _wall(day, 15 * index)
+    if not _exists(start, tz):
+        return None
+    return start.replace(tzinfo=tz).astimezone(UTC) + timedelta(minutes=15)
 
 
 def unpivot(
     rows: Iterator[dict[str, str]],
     stats: ReadStats,
     source: str = "scats",
-    tz: str = "AEST",
+    tz: str = DEFAULT_TZ,
 ) -> Iterator[dict[str, Any]]:
     """Turn input rows into reading dictionaries for the API.
 
-    Blank volumes are missing intervals and produce no reading. A negative volume is passed
-    through, so that the API's validation rejects it and says why.
+    `-1` and blank volumes are missing intervals and produce no reading. Any other negative
+    volume is passed through, so that the API's validation rejects it and says why.
     """
     zone = resolve_tz(tz)
+    ends_by_day: dict[date, list[str | None]] = {}
     for row in rows:
         site = row.get("NB_SCATS_SITE", "").strip()
         detector = row.get("NB_DETECTOR", "").strip()
@@ -157,11 +182,23 @@ def unpivot(
             except ValueError:
                 stats.unreadable_values += 1
                 continue
+            if volume == MISSING:
+                stats.missing_intervals += 1
+                continue
+            if day not in ends_by_day:
+                ends_by_day[day] = [
+                    end.isoformat() if (end := interval_end_utc(day, i, zone)) else None
+                    for i in range(96)
+                ]
+            interval_end = ends_by_day[day][index]
+            if interval_end is None:
+                stats.nonexistent_local_times += 1
+                continue
             stats.readings += 1
             yield {
                 "site_id": site,
                 "detector_id": detector,
-                "interval_end": interval_end_utc(day, index, zone).isoformat(),
+                "interval_end": interval_end,
                 "volume": volume,
                 "source": source,
             }
@@ -205,7 +242,7 @@ def rows_for_sites(
 
 
 def read_readings(
-    path: Path, source: str = "scats", tz: str = "AEST", sites: set[str] | None = None
+    path: Path, source: str = "scats", tz: str = DEFAULT_TZ, sites: set[str] | None = None
 ) -> tuple[list[dict[str, Any]], ReadStats]:
     """Read a whole file. Returns readings sorted by interval end, and what was found.
 

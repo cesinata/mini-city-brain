@@ -31,6 +31,7 @@ class PipelineResult:
     success: bool
     failures: list[Failure] = field(default_factory=list)
     passed_checks: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
 
 
 def run_pipeline(
@@ -46,10 +47,16 @@ def run_pipeline(
     result = job.execute_in_process(raise_on_error=False, instance=instance)
     failures: list[Failure] = []
     passed: list[str] = []
+    warnings: list[str] = []
     for ev in result.get_asset_check_evaluations():
         name = f"{ev.asset_key.to_user_string()}:{ev.check_name}"
         if ev.passed:
             passed.append(name)
+            if (ev.description or "").startswith("WARNING"):
+                warnings.append(
+                    f"{ev.check_name} on {ev.asset_key.to_user_string()}: "
+                    f"{ev.description.removeprefix('WARNING ')}"
+                )
         else:
             failures.append(
                 Failure(ev.check_name, ev.asset_key.to_user_string(), ev.description or "failed")
@@ -59,7 +66,7 @@ def run_pipeline(
             data = event.step_failure_data
             first = (data.error.message if data.error else "step failed").strip().splitlines()[0]
             failures.append(Failure("step failure", event.step_key or "unknown", first))
-    return PipelineResult(result.success, failures, passed)
+    return PipelineResult(result.success, failures, passed, warnings)
 
 
 def format_failure(result: PipelineResult) -> str:
@@ -104,6 +111,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     result = run_pipeline(settings, instance=instance)
     if result.success:
         print(f"PIPELINE OK: {len(result.passed_checks)} checks passed")
+        for warning in result.warnings:
+            print(f"  warning: {warning}")
         return 0
     print(format_failure(result))
     return 1
