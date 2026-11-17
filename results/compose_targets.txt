@@ -1,0 +1,38 @@
+Stage 3: the separate compose targets, 2026-11-17T01:06:41Z, from a stopped stack
+Label: measured (host CPU), one run. Data: synthetic (simulated); make replay keeps the injected faults.
+
+$ make up
+ Container mini-city-brain-api-1 Started 
+bash scripts/wait_for_health.sh
+healthy after 1s: http://localhost:8000/health
+exit 0
+
+$ make replay
+  "summary": {
+    "batches_sent": 1,
+    "batches_failed": 0,
+    "readings_sent": 444,
+    "accepted": 359,
+    "rejected": 85,
+    "retries": 0,
+    "reject_reasons": {
+      "duplicate": 84,
+      "volume": 1
+    }
+  }
+}
+exit 0
+
+$ .venv/bin/python -m scripts.smoke_assert --wait 60
+smoke check passed: objects in raw bucket, dead-letter queue empty
+exit 0
+
+$ make down
+ Container mini-city-brain-emulator-1 Removed 
+ Network mini-city-brain_default Removing 
+ Network mini-city-brain_default Removed 
+exit 0
+
+$ containers and networks left (docker ps -a / docker network ls, name mini-city-brain)
+0
+0

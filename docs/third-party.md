@@ -172,7 +172,7 @@ Direct dependencies first (marked **direct**), then everything they pull in.
 
 ## Docker images
 
-Pinned by tag in `docker-compose.yml` and the Dockerfiles. None was pulled on the build machine (no Docker), and no licence was read for any of them.
+Pinned by tag in `docker-compose.yml` and the Dockerfiles. Every tag except `localstack/localstack` was pulled and run on 2026-11-17 (`make demo`), and CI pulls the ones the compose smoke test uses. No licence was read for any of them.
 
 | Image | Tag | Used for | Licence |
 | --- | --- | --- | --- |

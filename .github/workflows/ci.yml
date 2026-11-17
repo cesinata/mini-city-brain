@@ -58,7 +58,7 @@ jobs:
     runs-on: ubuntu-24.04
     needs: [docker-build]
     env:
-      AWS_ENDPOINT_URL: http://localhost:5000
+      AWS_ENDPOINT_URL: http://127.0.0.1:5050
       AWS_ACCESS_KEY_ID: test
       AWS_SECRET_ACCESS_KEY: test
       AWS_DEFAULT_REGION: ap-southeast-2

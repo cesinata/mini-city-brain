@@ -59,3 +59,21 @@ def test_compose_obs_profile_and_read_only_anonymous_grafana():
     assert all(p.startswith("127.0.0.1:") for p in svc["grafana"]["ports"])
     assert "profiles" not in svc["api"] and "profiles" not in svc["worker"]
     assert svc["localstack"]["profiles"] == ["localstack"]
+
+
+def _panel(dash: dict, prefix: str) -> dict:
+    return next(p for p in dash["panels"] if p["title"].startswith(prefix))
+
+
+def test_time_since_last_success_subtracts_the_filtered_gauge():
+    # In PromQL, `x > 0` keeps x's own value; multiplying by it gave ages in the millions of
+    # years. The filter must only drop the 0 that means "no run recorded".
+    dash = json.loads(DASHBOARD.read_text())
+    expr = _panel(dash, "Time since last pipeline success")["targets"][0]["expr"]
+    assert expr.replace(" ", "") == "time()-(mcb_pipeline_last_success_timestamp_seconds>0)"
+
+
+def test_rejection_rate_axis_is_zero_to_one_hundred_percent():
+    dash = json.loads(DASHBOARD.read_text())
+    defaults = _panel(dash, "Rejection rate")["fieldConfig"]["defaults"]
+    assert (defaults["unit"], defaults["min"], defaults["max"]) == ("percentunit", 0, 1)

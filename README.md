@@ -55,10 +55,11 @@ PIPELINE FAILED
 ------------------------------------------------------------
   check: duplicate_rate
   asset: raw_objects_loaded
-  why:   96 of 1800 raw rows repeat a key (rate 0.0533, limit 0.01)
+  why:   76 of 152 raw rows repeat a key (rate 0.5000, limit 0.01)
+Nothing downstream of a failed check was built.
 ```
 
-That block is from a run on synthetic data, so its numbers are `simulated` (`results/pipeline_synthetic_bad.txt`). `make demo-bad` against Docker has not been run: the build machine had no Docker. Details in [docs/demo.md](docs/demo.md).
+That block is from `make demo-bad` against the Docker stack on my laptop on 2026-11-17, started from an empty stack (`results/demo_bad_run.txt`). Each request had 76 readings accepted and 1 rejected for `volume`. The data is synthetic, so the numbers are `simulated`. Details in [docs/demo.md](docs/demo.md).
 
 ## Quick start
 
@@ -122,7 +123,9 @@ Attribution text for real data: "Contains Traffic Signal Volume Data from the De
 
 - Real data has not been loaded. The SCATS reader follows the published data dictionary and is tested on synthetic files only. The date format, the missing-value convention and the time zone (read as fixed UTC+10) are unconfirmed.
 - No real cloud deployment, no Kubernetes, no Spark.
-- The Docker images, the compose stack, the Terraform `init` container, Grafana and `make demo` were not run on the build machine (no Docker). CI is set up to run the first three, but has not run yet.
+- The Docker stack has run on one machine only (macOS on Apple M3, 2026-11-17): `make demo`, `make demo-bad`, the Terraform `init` container, Prometheus and Grafana, all on synthetic data (`results/demo_run.txt`, `results/stack_checks.txt`). CI runs the compose smoke test on Linux and passed on 2026-11-16.
+- The demo has only 2 days of history, so the forecast endpoint answers but both baselines return `null`: they need at least one earlier week.
+- I looked at the Grafana dashboard, the Dagster UI and the API docs on 2026-11-17. That check found two broken Grafana panels (time since last success, rejection-rate axis), which are now fixed (decisions D39). The ingest-rate panel stays flat in `make demo`, because the replay finishes in about a second, faster than Prometheus can see a rate.
 - The demo page has not been opened in a browser. No map is shown, because no site-locations file has been joined.
 - The reading schema carries no alarm field, so detector health uses missing intervals only.
 - Forecasts are two simple baselines, not a trained model.

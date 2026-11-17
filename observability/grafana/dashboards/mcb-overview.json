@@ -63,7 +63,9 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "percentunit"
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1
         },
         "overrides": []
       },
@@ -206,7 +208,7 @@
             "type": "prometheus",
             "uid": "mcb-prometheus"
           },
-          "expr": "(time() - mcb_pipeline_last_success_timestamp_seconds) * (mcb_pipeline_last_success_timestamp_seconds > 0)",
+          "expr": "time() - (mcb_pipeline_last_success_timestamp_seconds > 0)",
           "legendFormat": ""
         }
       ]

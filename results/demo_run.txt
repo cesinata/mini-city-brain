@@ -1,0 +1,253 @@
+# make demo, 2026-11-17, macOS arm64 (Apple M3), Docker Desktop 29.9.3. Exit 0, 189 s wall time (measured (host CPU), one run). Data: synthetic (simulated).
+# Saved output with terminal colour codes removed and the repository path shown as <repo>.
+
+bash scripts/demo.sh
+ Image mini-city-brain-api Building 
+ Image mini-city-brain-worker Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 1.03kB done
+#1 DONE 0.0s
+
+#2 [worker internal] load build definition from Dockerfile
+#2 transferring dockerfile: 1.01kB done
+#2 DONE 0.0s
+
+#3 [api internal] load build definition from Dockerfile
+#3 transferring dockerfile: 958B done
+#3 DONE 0.0s
+
+#4 [api internal] load metadata for docker.io/library/python:3.13.5-slim
+#4 ...
+
+#5 [auth] library/python:pull token for registry-1.docker.io
+#5 DONE 0.0s
+
+#4 [api internal] load metadata for docker.io/library/python:3.13.5-slim
+#4 DONE 1.4s
+
+#6 [worker internal] load .dockerignore
+#6 transferring context: 2B done
+#6 DONE 0.0s
+
+#7 [api 1/8] FROM docker.io/library/python:3.13.5-slim@sha256:4c2cf9917bd1cbacc5e9b07320025bdb7cdf2df7b0ceaccb55e9dd7e30987419
+#7 resolve docker.io/library/python:3.13.5-slim@sha256:4c2cf9917bd1cbacc5e9b07320025bdb7cdf2df7b0ceaccb55e9dd7e30987419 done
+#7 DONE 0.0s
+
+#8 [worker internal] load build context
+#8 transferring context: 1.20kB done
+#8 DONE 0.0s
+
+#9 [api internal] load build context
+#9 transferring context: 2.28kB done
+#9 DONE 0.0s
+
+#10 [worker 4/8] RUN pip install -r /tmp/requirements/worker.txt -c /tmp/requirements/constraints.txt     && rm -rf /tmp/requirements
+#10 CACHED
+
+#11 [worker 3/8] COPY requirements/worker.txt requirements/constraints.txt /tmp/requirements/
+#11 CACHED
+
+#12 [worker 5/8] COPY services/__init__.py services/__init__.py
+#12 CACHED
+
+#13 [worker 7/8] COPY services/worker services/worker
+#13 CACHED
+
+#14 [worker 6/8] COPY services/common services/common
+#14 CACHED
+
+#15 [api 7/9] COPY forecast forecast
+#15 CACHED
+
+#16 [api 2/8] WORKDIR /app
+#16 CACHED
+
+#17 [api 3/9] COPY requirements/api.txt requirements/constraints.txt /tmp/requirements/
+#17 CACHED
+
+#18 [api 5/9] COPY services/__init__.py services/__init__.py
+#18 CACHED
+
+#19 [api 6/9] COPY services/common services/common
+#19 CACHED
+
+#20 [api 8/9] COPY services/api services/api
+#20 CACHED
+
+#21 [api 4/9] RUN pip install -r /tmp/requirements/api.txt -c /tmp/requirements/constraints.txt     && rm -rf /tmp/requirements
+#21 CACHED
+
+#22 [worker 8/8] RUN useradd --system --uid 10001 --no-create-home app
+#22 CACHED
+
+#23 [api 9/9] RUN useradd --system --uid 10001 --no-create-home app
+#23 CACHED
+
+#24 [worker] exporting to image
+#24 exporting layers done
+#24 exporting manifest sha256:e61562b92f5b9a3a881c7cf11ad11df23de18161f71fec9b32fbd176e22f4112 done
+#24 exporting config sha256:05d72850da0eed1bae70efb1651b0906ce178695d39604df1d25aa91eb999f07 done
+#24 exporting attestation manifest sha256:aa27bd224d854a5af97a11f9686ac2705676ce12c6e1c085329829edff034da0 done
+#24 exporting manifest list sha256:96a9505f9084e654726cecdcc5c0ccde0f7894f041b6f5924d60a053b87836fa done
+#24 naming to docker.io/library/mini-city-brain-worker:latest done
+#24 unpacking to docker.io/library/mini-city-brain-worker:latest done
+#24 DONE 0.0s
+
+#25 [api] exporting to image
+#25 exporting layers done
+#25 exporting manifest sha256:406b30f1e5394227eca97b2aeb8c6c5bb7b0d142e17f6de675b36e3f30e7137d done
+#25 exporting config sha256:52b54c33bd2552efaf8291a917172b965dbf88cfc0de2352006a3c21d1438daa done
+#25 exporting attestation manifest sha256:779931a7c3cb25a90cf6ab1a7d191ad45e4641bc9a86fad5a002875f9c1d7d06 done
+#25 exporting manifest list sha256:d11bcff7bc44db406126958815c465a17fe860c07c352c266a025c6c018f837d done
+#25 naming to docker.io/library/mini-city-brain-api:latest done
+#25 unpacking to docker.io/library/mini-city-brain-api:latest done
+#25 DONE 0.0s
+
+#26 [worker] resolving provenance for metadata file
+#26 DONE 0.0s
+
+#27 [api] resolving provenance for metadata file
+#27 DONE 0.0s
+ Image mini-city-brain-worker Built 
+ Image mini-city-brain-api Built 
+ Network mini-city-brain_default Creating 
+ Network mini-city-brain_default Creating 
+ Network mini-city-brain_default Created 
+ Network mini-city-brain_default Created 
+ Container mini-city-brain-emulator-1 Creating 
+ Container mini-city-brain-emulator-1 Created 
+ Container mini-city-brain-init-1 Creating 
+ Container mini-city-brain-init-1 Created 
+ Container mini-city-brain-worker-1 Creating 
+ Container mini-city-brain-api-1 Creating 
+ Container mini-city-brain-api-1 Created 
+ Container mini-city-brain-worker-1 Created 
+ Container mini-city-brain-prometheus-1 Creating 
+ Container mini-city-brain-prometheus-1 Created 
+ Container mini-city-brain-grafana-1 Creating 
+ Container mini-city-brain-grafana-1 Created 
+ Container mini-city-brain-emulator-1 Starting 
+ Container mini-city-brain-emulator-1 Started 
+ Container mini-city-brain-emulator-1 Waiting 
+ Container mini-city-brain-emulator-1 Healthy 
+ Container mini-city-brain-init-1 Starting 
+ Container mini-city-brain-init-1 Started 
+ Container mini-city-brain-init-1 Waiting 
+ Container mini-city-brain-init-1 Exited 
+ Container mini-city-brain-api-1 Starting 
+ Container mini-city-brain-worker-1 Starting 
+ Container mini-city-brain-api-1 Started 
+ Container mini-city-brain-worker-1 Started 
+ Container mini-city-brain-prometheus-1 Starting 
+ Container mini-city-brain-prometheus-1 Started 
+ Container mini-city-brain-grafana-1 Starting 
+ Container mini-city-brain-grafana-1 Started 
+healthy after 1s: http://localhost:8000/health
+{
+  "summary": {
+    "batches_sent": 4,
+    "batches_failed": 0,
+    "readings_sent": 1920,
+    "accepted": 1920,
+    "rejected": 0,
+    "retries": 0,
+    "reject_reasons": {}
+  }
+}
+smoke check passed: objects in raw bucket, at least 1920 readings, dead-letter queue empty
+01:02:20  Running with dbt=1.12.6
+01:02:20  Registered adapter: duckdb=1.11.0
+01:02:20  Unable to do partial parsing because config vars, config profile, or config target have changed
+01:02:21  [WARNING][MissingArgumentsPropertyInGenericTestDeprecation]: Deprecated
+functionality
+Found top-level arguments to test `accepted_range` defined on 'stg_readings' in
+package 'mcb' (models/schema.yml). Arguments to generic tests should be nested
+under the `arguments` property.
+01:02:21  Performance info: <repo>/data/dbt_target/perf_info.json
+01:02:21  [WARNING][DeprecationsSummary]: Deprecated functionality
+Summary of encountered deprecations:
+- MissingArgumentsPropertyInGenericTestDeprecation: 4 occurrences
+To see all deprecation instances instead of just the first occurrence of each,
+run command again with the `--show-all-deprecations` flag. You may also need to
+run with `--no-partial-parse` as some deprecations are only encountered during
+parsing.
+Running with dbt=1.12.6
+Registered adapter: duckdb=1.11.0
+Unable to do partial parsing because config vars, config profile, or config target have changed
+[WARNING][MissingArgumentsPropertyInGenericTestDeprecation]: Deprecated
+functionality
+Found top-level arguments to test `accepted_range` defined on 'stg_readings' in
+package 'mcb' (models/schema.yml). Arguments to generic tests should be nested
+under the `arguments` property.
+Found 4 models, 17 data tests, 1 source, 503 macros
+
+Concurrency: 1 threads (target='local')
+
+1 of 21 START test source_not_null_raw_readings_detector_id .................... [RUN]
+1 of 21 PASS source_not_null_raw_readings_detector_id .......................... [PASS in 0.02s]
+2 of 21 START test source_not_null_raw_readings_interval_end ................... [RUN]
+2 of 21 PASS source_not_null_raw_readings_interval_end ......................... [PASS in 0.01s]
+3 of 21 START test source_not_null_raw_readings_site_id ........................ [RUN]
+3 of 21 PASS source_not_null_raw_readings_site_id .............................. [PASS in 0.01s]
+4 of 21 START test source_not_null_raw_readings_volume ......................... [RUN]
+4 of 21 PASS source_not_null_raw_readings_volume ............................... [PASS in 0.01s]
+5 of 21 START test source_raw_duplicate_rate_within_limit_raw_readings_ ........ [RUN]
+5 of 21 PASS source_raw_duplicate_rate_within_limit_raw_readings_ .............. [PASS in 0.02s]
+6 of 21 START test source_raw_no_negative_volume_raw_readings_ ................. [RUN]
+6 of 21 PASS source_raw_no_negative_volume_raw_readings_ ....................... [PASS in 0.01s]
+7 of 21 START sql table model main.stg_readings ................................ [RUN]
+7 of 21 OK created sql table model main.stg_readings ........................... [OK in 0.06s]
+8 of 21 START test accepted_range_stg_readings_volume__2000__0 ................. [RUN]
+8 of 21 PASS accepted_range_stg_readings_volume__2000__0 ....................... [PASS in 0.01s]
+9 of 21 START test not_null_stg_readings_reading_key ........................... [RUN]
+9 of 21 PASS not_null_stg_readings_reading_key ................................. [PASS in 0.01s]
+10 of 21 START test not_null_stg_readings_volume ............................... [RUN]
+10 of 21 PASS not_null_stg_readings_volume ..................................... [PASS in 0.02s]
+11 of 21 START test unique_stg_readings_reading_key ............................ [RUN]
+11 of 21 PASS unique_stg_readings_reading_key .................................. [PASS in 0.01s]
+12 of 21 START sql table model main.fct_volume_15min ........................... [RUN]
+12 of 21 OK created sql table model main.fct_volume_15min ...................... [OK in 0.01s]
+13 of 21 START test accepted_range_fct_volume_15min_volume__2000__0 ............ [RUN]
+13 of 21 PASS accepted_range_fct_volume_15min_volume__2000__0 .................. [PASS in 0.01s]
+14 of 21 START test not_null_fct_volume_15min_reading_key ...................... [RUN]
+14 of 21 PASS not_null_fct_volume_15min_reading_key ............................ [PASS in 0.01s]
+15 of 21 START test unique_fct_volume_15min_reading_key ........................ [RUN]
+15 of 21 PASS unique_fct_volume_15min_reading_key .............................. [PASS in 0.01s]
+16 of 21 START sql table model main.fct_detector_health ........................ [RUN]
+16 of 21 OK created sql table model main.fct_detector_health ................... [OK in 0.01s]
+17 of 21 START sql table model main.fct_volume_hourly .......................... [RUN]
+17 of 21 OK created sql table model main.fct_volume_hourly ..................... [OK in 0.02s]
+18 of 21 START test accepted_range_fct_detector_health_completeness__1__0 ...... [RUN]
+18 of 21 PASS accepted_range_fct_detector_health_completeness__1__0 ............ [PASS in 0.01s]
+19 of 21 START test completeness_below_threshold ............................... [RUN]
+19 of 21 PASS completeness_below_threshold ..................................... [PASS in 0.01s]
+20 of 21 START test accepted_range_fct_volume_hourly_hour_of_day__23__0 ........ [RUN]
+20 of 21 PASS accepted_range_fct_volume_hourly_hour_of_day__23__0 .............. [PASS in 0.01s]
+21 of 21 START test not_null_fct_volume_hourly_site_id ......................... [RUN]
+21 of 21 PASS not_null_fct_volume_hourly_site_id ............................... [PASS in 0.01s]
+
+Finished running 4 table models, 17 data tests in 0 hours 0 minutes and 0.39 seconds (0.39s).
+
+Completed successfully
+
+Done. PASS=21 WARN=0 ERROR=0 SKIP=0 NO-OP=0 REUSED=0 TOTAL=21
+[WARNING][DeprecationsSummary]: Deprecated functionality
+Summary of encountered deprecations:
+- MissingArgumentsPropertyInGenericTestDeprecation: 4 occurrences
+To see all deprecation instances instead of just the first occurrence of each,
+run command again with the `--show-all-deprecations` flag. You may also need to
+run with `--no-partial-parse` as some deprecations are only encountered during
+parsing.
+PIPELINE OK: 15 checks passed
+
+Summary
+  1. readings sent:       1920
+  2. readings accepted:   1920
+  3. readings rejected:   0  
+  4. objects written:     4 (raw/scats/ in the raw bucket)
+  5. pipeline:            PIPELINE OK: 15 checks passed
+
+URLs
+  API docs:   http://localhost:8000/docs
+  Grafana:    http://localhost:3000   (anonymous viewer, dashboard 'mini-city-brain')
+  Dagster UI: run `make dagster-ui`, then open http://localhost:3001

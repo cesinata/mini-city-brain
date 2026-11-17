@@ -39,7 +39,8 @@ def run_pipeline(
     instance: dg.DagsterInstance | None = None,
 ) -> PipelineResult:
     # dbt reads the database path from the environment, so keep it in step with the loader.
-    os.environ["DUCKDB_PATH"] = settings.db_path
+    # Absolute, because dbt runs from transform/ and would resolve a relative path there (D35).
+    os.environ["DUCKDB_PATH"] = str(Path(settings.db_path).resolve())
     defs = build_definitions(settings, manifest_path)
     job = defs.resolve_job_def("mcb_pipeline")
     result = job.execute_in_process(raise_on_error=False, instance=instance)

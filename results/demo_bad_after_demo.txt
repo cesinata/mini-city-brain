@@ -1,0 +1,154 @@
+# make demo-bad right after make demo (bucket still held the demo readings), 2026-11-17, same machine. Script exit 1 (make exit 2), 75 s wall time (measured (host CPU), one run). Data: synthetic (simulated).
+# Saved output with terminal colour codes removed and the repository path shown as <repo>.
+
+bash scripts/demo_bad.sh
+ Image mini-city-brain-api Building 
+ Image mini-city-brain-worker Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 1.03kB done
+#1 DONE 0.0s
+
+#2 [worker internal] load build definition from Dockerfile
+#2 transferring dockerfile: 1.01kB done
+#2 DONE 0.0s
+
+#3 [api internal] load build definition from Dockerfile
+#3 transferring dockerfile: 958B done
+#3 DONE 0.0s
+
+#4 [worker internal] load metadata for docker.io/library/python:3.13.5-slim
+#4 ...
+
+#5 [auth] library/python:pull token for registry-1.docker.io
+#5 DONE 0.0s
+
+#4 [worker internal] load metadata for docker.io/library/python:3.13.5-slim
+#4 DONE 1.9s
+
+#6 [worker internal] load .dockerignore
+#6 transferring context: 2B done
+#6 DONE 0.0s
+
+#7 [worker 1/9] FROM docker.io/library/python:3.13.5-slim@sha256:4c2cf9917bd1cbacc5e9b07320025bdb7cdf2df7b0ceaccb55e9dd7e30987419
+#7 resolve docker.io/library/python:3.13.5-slim@sha256:4c2cf9917bd1cbacc5e9b07320025bdb7cdf2df7b0ceaccb55e9dd7e30987419 done
+#7 DONE 0.0s
+
+#8 [worker internal] load build context
+#8 transferring context: 1.20kB done
+#8 DONE 0.0s
+
+#9 [api internal] load build context
+#9 transferring context: 2.28kB done
+#9 DONE 0.0s
+
+#10 [worker 3/8] COPY requirements/worker.txt requirements/constraints.txt /tmp/requirements/
+#10 CACHED
+
+#11 [worker 6/8] COPY services/common services/common
+#11 CACHED
+
+#12 [worker 7/8] COPY services/worker services/worker
+#12 CACHED
+
+#13 [worker 5/8] COPY services/__init__.py services/__init__.py
+#13 CACHED
+
+#14 [worker 4/8] RUN pip install -r /tmp/requirements/worker.txt -c /tmp/requirements/constraints.txt     && rm -rf /tmp/requirements
+#14 CACHED
+
+#15 [api 8/9] COPY services/api services/api
+#15 CACHED
+
+#16 [api 4/9] RUN pip install -r /tmp/requirements/api.txt -c /tmp/requirements/constraints.txt     && rm -rf /tmp/requirements
+#16 CACHED
+
+#17 [api 7/9] COPY forecast forecast
+#17 CACHED
+
+#18 [api 5/9] COPY services/__init__.py services/__init__.py
+#18 CACHED
+
+#19 [api 6/9] COPY services/common services/common
+#19 CACHED
+
+#20 [worker 2/9] WORKDIR /app
+#20 CACHED
+
+#21 [api 3/9] COPY requirements/api.txt requirements/constraints.txt /tmp/requirements/
+#21 CACHED
+
+#22 [worker 8/8] RUN useradd --system --uid 10001 --no-create-home app
+#22 CACHED
+
+#23 [api 9/9] RUN useradd --system --uid 10001 --no-create-home app
+#23 CACHED
+
+#24 [worker] exporting to image
+#24 exporting layers done
+#24 exporting manifest sha256:e61562b92f5b9a3a881c7cf11ad11df23de18161f71fec9b32fbd176e22f4112 done
+#24 exporting config sha256:05d72850da0eed1bae70efb1651b0906ce178695d39604df1d25aa91eb999f07 done
+#24 exporting attestation manifest sha256:8af7277990a5178f917f29a36b52ca7550614c1d58b9d4b3c9a6ba116de5bcf4 done
+#24 exporting manifest list sha256:bf9a28e9d985db24204ac6d0d06e79add718d13af54670fa93375e1a58eab0c9 done
+#24 naming to docker.io/library/mini-city-brain-worker:latest done
+#24 unpacking to docker.io/library/mini-city-brain-worker:latest done
+#24 DONE 0.1s
+
+#25 [api] exporting to image
+#25 exporting layers done
+#25 exporting manifest sha256:406b30f1e5394227eca97b2aeb8c6c5bb7b0d142e17f6de675b36e3f30e7137d done
+#25 exporting config sha256:52b54c33bd2552efaf8291a917172b965dbf88cfc0de2352006a3c21d1438daa done
+#25 exporting attestation manifest sha256:02e1ccef2781c56a03d3c161870187057645adeb1bb8b9532775a46a8e44fa67 done
+#25 exporting manifest list sha256:5dfff876d70c9a3bb2cb42f304be347512d5fb4b76c35d4e8ab876589a49dc93 done
+#25 naming to docker.io/library/mini-city-brain-api:latest done
+#25 unpacking to docker.io/library/mini-city-brain-api:latest done
+#25 DONE 0.1s
+
+#26 [worker] resolving provenance for metadata file
+#26 DONE 0.0s
+
+#27 [api] resolving provenance for metadata file
+#27 DONE 0.0s
+ Image mini-city-brain-api Built 
+ Image mini-city-brain-worker Built 
+ Container mini-city-brain-prometheus-1 Running 
+ Container mini-city-brain-grafana-1 Running 
+ Container mini-city-brain-emulator-1 Running 
+ Container mini-city-brain-api-1 Running 
+ Container mini-city-brain-worker-1 Running 
+ Container mini-city-brain-emulator-1 Waiting 
+ Container mini-city-brain-emulator-1 Healthy 
+ Container mini-city-brain-init-1 Starting 
+ Container mini-city-brain-init-1 Started 
+ Container mini-city-brain-init-1 Waiting 
+ Container mini-city-brain-init-1 Exited 
+healthy after 0s: http://localhost:8000/health
+demo-bad: sending a batch with a gap, a negative value and a duplicate send
+  request 1: HTTP 202, accepted 76, rejected 1 ['volume']
+  request 2: HTTP 202, accepted 76, rejected 1 ['volume']
+demo-bad: running the pipeline on what reached the bucket
+01:04:54  Running with dbt=1.12.6
+01:04:55  Registered adapter: duckdb=1.11.0
+01:04:55  Unable to do partial parsing because config vars, config profile, or config target have changed
+01:04:55  Unable to do partial parsing because profile has changed
+01:04:55  [WARNING][MissingArgumentsPropertyInGenericTestDeprecation]: Deprecated
+functionality
+Found top-level arguments to test `accepted_range` defined on 'stg_readings' in
+package 'mcb' (models/schema.yml). Arguments to generic tests should be nested
+under the `arguments` property.
+01:04:56  Performance info: <repo>/data/dbt_target/perf_info.json
+01:04:56  [WARNING][DeprecationsSummary]: Deprecated functionality
+Summary of encountered deprecations:
+- MissingArgumentsPropertyInGenericTestDeprecation: 4 occurrences
+To see all deprecation instances instead of just the first occurrence of each,
+run command again with the `--show-all-deprecations` flag. You may also need to
+run with `--no-partial-parse` as some deprecations are only encountered during
+parsing.
+PIPELINE FAILED
+------------------------------------------------------------
+  check: duplicate_rate
+  asset: raw_objects_loaded
+  why:   76 of 2072 raw rows repeat a key (rate 0.0367, limit 0.01)
+
+Nothing downstream of a failed check was built.
+{"demo_bad": "pipeline refused the faulty data", "exit": 1}
+make: *** [demo-bad] Error 1

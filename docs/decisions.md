@@ -233,3 +233,47 @@ Each entry has an ID, date, choice, reason and how to revert. New entries go at 
 - **Choice:** `main.py`, `main.tf`, `requirements.txt`, `Dockerfile` and `LICENSE.txt` were removed from the working tree by the owner. `"main.py"` is dropped from ruff's `extend-exclude`, because that pattern also excluded `services/api/main.py` and `services/worker/main.py`. Ruff then found one unsorted import block and one line over 100 characters in those two files; both were fixed in the code, with no new ignore.
 - **Also:** The repo now lives outside OneDrive (D23), and `make setup` created `.venv` inside it. `make setup` stops with a message if `$(PYTHON)` (default `python3.13`, D18) is missing.
 - **Revert:** Not applicable.
+
+## D34. Emulator published on host port 5050, reached at 127.0.0.1 (2026-11-17)
+
+- **Choice:** The Moto container still listens on 5000 inside the compose network (`http://emulator:5000`), but compose publishes it as `127.0.0.1:5050`. Every host-side default uses `http://127.0.0.1:5050`: `scripts/demo.sh`, `scripts/demo_bad.sh`, `env.example`, `.github/workflows/ci.yml`, `services/common/config.py` and the Terraform `endpoint_url` default.
+- **Reason:** On macOS, AirPlay Receiver (Control Center) listens on port 5000 on every address, IPv6 included. Docker published the emulator on `127.0.0.1:5000` only, so `http://localhost:5000` reached AirPlay, which answered 403 Forbidden, and `make demo` failed at its smoke check. Seen on 2026-11-17 with `lsof` and `curl` (`Server: AirTunes`). Using the IPv4 literal avoids `localhost` resolving to `::1` first.
+- **Check:** `tests/test_compose.py` asserts that the published port is not 5000 and that every host-side URL above uses it.
+- **Revert:** Change the port in `docker-compose.yml` and in the files above together; the test lists them.
+
+## D35. Paths handed to dbt are made absolute (2026-11-17)
+
+- **Choice:** `run_pipeline` sets `DUCKDB_PATH` to the absolute form of `--db`. The dbt asset sets it again before each dbt call (this also covers runs started in the Dagster UI) and resolves its target path. `parse_manifest` resolves its target folder.
+- **Reason:** Dagster runs dbt with `transform/` as its working directory. With the relative paths that `make demo` passes, dbt wrote its manifest to `transform/data/dbt_target/` while Dagster looked in `data/dbt_target/`, and dbt would have built its models in `transform/data/warehouse/mcb.duckdb` instead of the database the loader wrote. Tests used absolute temporary paths, so they never showed it.
+- **Check:** `tests/test_orchestration.py::test_cli_with_relative_paths_keeps_dbt_and_the_loader_on_one_database` fails without the fix and passes with it.
+- **Revert:** Pass absolute paths from every caller instead.
+
+## D36. Wait for every accepted reading before running the pipeline (2026-11-17)
+
+- **Choice:** `scripts.smoke_assert --expect-readings N` waits until the objects under `raw/scats/` hold at least N readings (non-empty ndjson lines). `make demo` passes the replay's accepted count. `make demo-bad` counts what is in the bucket before it posts and waits for that plus what the API accepted. CI's smoke test keeps the old check (at least one object, empty dead-letter queue).
+- **Reason:** The worker flushes after 1000 readings or 5 seconds (D21). On 2026-11-17 the smoke check passed as soon as the first object existed, and the pipeline loaded 1000 of 1920 readings; the completeness check then failed 10 detector-days of clean data. `make demo-bad` waited for "at least 2 objects", which an earlier `make demo` already satisfies.
+- **Revert:** Drop `--expect-readings` from `scripts/demo.sh` and restore the object check in `scripts/demo_bad.py`.
+
+## D37. Terraform lock file holds provider hashes for four platforms (2026-11-17)
+
+- **Choice:** `infra/terraform/.terraform.lock.hcl` lists `h1:` hashes for `darwin_arm64`, `darwin_amd64`, `linux_amd64` and `linux_arm64`, made with `terraform providers lock -platform=...`, one platform per run. The version stays 6.22.1 and the `zh:` hashes are unchanged.
+- **Reason:** The compose `init` container (Linux on Apple silicon) added its own hash on the first `make demo`, so the tracked file changed after a normal run. With all four platforms listed, a run on macOS, on CI or in the container leaves it unchanged. One platform per run because this laptop's disk was nearly full and four unpacked providers in one temporary folder did not fit.
+- **Revert:** Delete the added `h1:` lines.
+
+## D38. make down also stops the obs profile (2026-11-17)
+
+- **Choice:** `make down` runs `docker compose --profile obs down`. It keeps volumes; `make demo-down` still removes them.
+- **Reason:** After `make demo` (which starts the `obs` profile), a plain `docker compose down` left Prometheus and Grafana running and could not remove the network ("Resource is still in use").
+- **Revert:** Remove `--profile obs` from the `down` target.
+
+## Stage 3 notes on earlier entries (2026-11-17)
+
+- D22: the Terraform `init` container now runs in the compose stack. On a fresh stack it creates all four resources. A `terraform.tfstate` from an earlier run stays in `infra/terraform/` (gitignored); Terraform refreshes it, finds the resources missing in the new emulator and creates them again (`results/demo_run.txt`).
+- D28: Grafana starts, its health endpoint is ok, and its API finds the provisioned dashboard `mcb-overview`. The panels have not been checked by eye.
+
+## D39. Two Grafana panel fixes after the first look (2026-11-17)
+
+- **Choice:** "Time since last pipeline success" uses `time() - (mcb_pipeline_last_success_timestamp_seconds > 0)`. "Rejection rate" keeps the `percentunit` unit and gets a fixed axis from 0 to 1 (0% to 100%).
+- **Reason:** The first look at the dashboard showed ages in the hundreds of thousands of years. The old query multiplied the age by `(gauge > 0)`, and in PromQL a comparison without `bool` keeps the gauge's own value (about 1.8 billion), not 1. Against the live stack the old query gave 29805866327.8 s and the new one 16.5 s (`results/stack_checks.txt`, measured (host CPU), one run). With all-zero data Grafana picked an axis of 0 to 100 for a fraction, shown as 0% to 10000%.
+- **Check:** `tests/test_observability.py` asserts both panel definitions.
+- **Revert:** Edit `observability/grafana/dashboards/mcb-overview.json`.

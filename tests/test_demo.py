@@ -9,7 +9,7 @@ import httpx
 import pytest
 from fastapi.testclient import TestClient
 
-from scripts import demo_bad
+from scripts import demo_bad, smoke_assert
 from services.api.main import create_app
 from services.api.ports import AwsProbe, SqsPublisher
 from services.worker.main import Worker
@@ -47,7 +47,7 @@ def test_demo_bad_exits_non_zero_and_names_the_failed_check(aws, tmp_path, monke
         worker.receive()
         worker.flush()
 
-    code = demo_bad.main(client=in_process_client(api), wait=0, after_post=run_worker)
+    code = demo_bad.main(client=in_process_client(api), wait=5, after_post=run_worker)
     out = capsys.readouterr().out
     assert code != 0
     # The API rejected the negative value and said why.
@@ -66,3 +66,36 @@ def test_scripts_refuse_cleanly_without_docker(script):
     done = subprocess.run(["bash", script], cwd=ROOT, capture_output=True, text=True, timeout=60)
     assert done.returncode == 2
     assert "Docker is not available" in done.stderr
+
+
+# ---- waiting for the worker (decisions D36) -------------------------------------------------
+
+
+def _put_ndjson(aws, key: str, lines: int) -> None:
+    body = "".join(json.dumps({"n": i}) + "\n" for i in range(lines))
+    aws.s3.put_object(Bucket=aws.settings.raw_bucket, Key=key, Body=body.encode())
+
+
+def test_raw_reading_count_sums_lines_over_all_objects(aws):
+    assert smoke_assert.raw_reading_count(aws.s3, aws.settings.raw_bucket) == 0
+    _put_ndjson(aws, "raw/scats/date=2026-03-01/a.ndjson", 3)
+    _put_ndjson(aws, "raw/scats/date=2026-03-02/b.ndjson", 4)
+    _put_ndjson(aws, "other/c.ndjson", 10)  # outside raw/scats/: not counted
+    assert smoke_assert.raw_reading_count(aws.s3, aws.settings.raw_bucket) == 7
+
+
+def test_check_fails_until_every_expected_reading_is_in_the_bucket(aws):
+    _put_ndjson(aws, "raw/scats/date=2026-03-01/a.ndjson", 1000)
+    problems = smoke_assert.check(aws.settings, aws.s3, aws.sqs, expect_readings=1920)
+    assert problems == ["raw bucket holds 1000 readings, expected at least 1920"]
+    _put_ndjson(aws, "raw/scats/date=2026-03-02/b.ndjson", 920)
+    assert smoke_assert.check(aws.settings, aws.s3, aws.sqs, expect_readings=1920) == []
+    # Without an expected count, one object is enough (the CI smoke test's behaviour).
+    assert smoke_assert.check(aws.settings, aws.s3, aws.sqs) == []
+
+
+def test_wait_for_readings_returns_the_count_after_the_deadline(aws):
+    _put_ndjson(aws, "raw/scats/date=2026-03-01/a.ndjson", 5)
+    got = smoke_assert.wait_for_readings(aws.settings, 10, wait=0, s3=aws.s3)
+    assert got == 5
+    assert smoke_assert.wait_for_readings(aws.settings, 5, wait=0, s3=aws.s3) == 5

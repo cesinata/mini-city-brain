@@ -17,7 +17,8 @@ services:
     image: motoserver/moto:5.2.4
     command: ["-H", "0.0.0.0", "-p", "5000"]
     ports:
-      - "127.0.0.1:5000:5000"
+      # Host port 5050, not 5000: macOS AirPlay Receiver listens on 5000 (decisions D34).
+      - "127.0.0.1:5050:5000"
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/moto-api/', timeout=2)"]
       interval: 5s
