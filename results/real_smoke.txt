@@ -1,0 +1,5 @@
+# python -m scripts.smoke_assert --wait 900 --expect-readings 1577675, 2026-11-17, right after the replay. Exit 0, 13 s wall time. Label: measured (host CPU), one run.
+# Source: Department of Transport and Planning (Victoria), Traffic Signal Volume Data, CC BY 4.0.
+# Saved output with terminal colour codes removed and the repository path shown as <repo>.
+
+smoke check passed: objects in raw bucket, at least 1577675 readings, dead-letter queue empty

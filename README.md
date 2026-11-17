@@ -16,15 +16,21 @@ mini-city-brain replays public Victorian traffic-signal volume data as a stream 
 
 When are Melbourne's signalised intersections busiest, and how close does a simple forecast get?
 
+First answer, from one real month: across the 20 busiest signal sites in October 2026, the busiest hour of the week was **Wednesday 17:00 to 18:00 local time, with 176,487 vehicles counted** on average in that hour (`measured (host CPU)`, one run, `results/real_busiest_hour.txt`). On weekdays the peak hour is 17:00, on weekends 12:00.
+
+How close a forecast gets, on the last 7 days of that month: the mean of the same 15-minute interval in earlier weeks was off by **99.9 vehicles per interval per site** (mean absolute error, MAPE 28.2%). Repeating the same interval one week earlier was off by 114.4 (MAPE 30.1%) (`measured (host CPU)`, one run, `results/forecast_eval_real.json`). October gives only 24 days of history before that week, so the "four-week" mean uses at most three earlier weeks.
+
+Contains Traffic Signal Volume Data from the Department of Transport and Planning (Victoria), licensed under CC BY 4.0.
+
 ## What is real and what is simulated
 
 | Part | Status |
 | --- | --- |
-| Source data (Victorian traffic-signal volumes) | Real and public. I download it into `data/raw/` (not in git). Not loaded on the build machine. |
+| Source data (Victorian traffic-signal volumes) | Real and public. I download it into `data/raw/` (not in git). One month (October 2026) has run through the whole stack on my laptop: 1,577,675 readings for the 20 busiest sites, all accepted (`measured (host CPU)`, `results/real_replay.txt`). |
 | Test, CI and default demo data | Synthetic, generated with a fixed seed. Anything computed from it is labelled `simulated`. |
 | AWS services | A local AWS emulator (Moto). No real cloud account and no real credentials. |
 | Replay speed | The replay client posts readings faster than they happened (for example 60x, or as fast as possible). It is a replay, not a live feed. |
-| Forecast results | `not measured` on real data. Results on synthetic data are `simulated` and are not quoted here. |
+| Forecast results | One real month, quoted above (`measured (host CPU)`). Results on synthetic data are `simulated` and are not quoted here. |
 | Demo page | Built from synthetic data unless I set `REAL_DATA_ENABLED`. The page shows which. |
 
 ## Architecture
@@ -123,7 +129,8 @@ Attribution text for real data: "Contains Traffic Signal Volume Data from the De
 
 ## Limits and what is not built
 
-- Real data has not been loaded. The SCATS reader follows the published data dictionary and is tested on synthetic files only. The date format, the missing-value convention and the time zone (read as fixed UTC+10) are unconfirmed.
+- One real month has been loaded (October 2026). It showed that missing intervals are `-1` and that the 96 intervals follow Melbourne clock time with daylight saving, and the reader now reads them that way (decisions D43). The day clocks go back in April has not been checked.
+- Real detectors break. In that month 53 of 16,532 detector-days (0.32%) at the 20 sites had fewer than 90% of their intervals, 31 of them from one detector that reports about half the day all month (`measured (host CPU)`, `results/real_completeness_breakdown.txt`). The completeness check now fails a run only when more than 1% of detector-days are incomplete, and prints the incomplete ones as a warning (decisions D45). With the old rule, that one detector failed every real run.
 - No real cloud deployment, no Kubernetes, no Spark.
 - The Docker stack has run on one machine only (macOS on Apple M3, 2026-11-17): `make demo`, `make demo-bad`, the Terraform `init` container, Prometheus and Grafana, all on synthetic data (`results/demo_run.txt`, `results/stack_checks.txt`). CI runs the compose smoke test on Linux and passed on 2026-11-16.
 - The demo has only 2 days of history, so the forecast endpoint answers but both baselines return `null`: they need at least one earlier week.

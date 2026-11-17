@@ -1,0 +1,29 @@
+Completeness on real data: October 2026, top 20 sites by summed QT_VOLUME_24HOUR, replayed through the stack.
+Database: data/warehouse/real.duckdb. Counts first taken after a run in which the old rule (any detector-day below 0.9 fails) stopped the pipeline; the run in results/real_pipeline.txt (rate-based rule, decisions D45) built the same tables and gives the same counts.
+Label: measured (host CPU), one run. Data: real. Threshold: min_completeness 0.9 per detector and local day; the run fails only above 1% of detector-days (max_incomplete_share).
+Source: Department of Transport and Planning (Victoria), Traffic Signal Volume Data, CC BY 4.0.
+
+detector-days: 16532; mean completeness 0.9941; below 0.9: 53 (0.32%)
+detectors: 536 | sites: 20 | local days: ('2026-10-01', '2026-10-31')
+
+below 0.9 by site (site, detector-days, distinct detectors):
+   ('849', 31, 1)
+   ('2843', 8, 2)
+   ('3380', 8, 4)
+   ('3381', 2, 1)
+   ('3385', 2, 2)
+   ('1197', 1, 1)
+   ('2816', 1, 1)
+
+below 0.9 by local day (day, detector-days):
+   [('2026-10-01', 3), ('2026-10-02', 3), ('2026-10-03', 1), ('2026-10-04', 1), ('2026-10-05', 1), ('2026-10-06', 1), ('2026-10-07', 1), ('2026-10-08', 1), ('2026-10-09', 2), ('2026-10-10', 1), ('2026-10-11', 1), ('2026-10-12', 1), ('2026-10-13', 1), ('2026-10-14', 1), ('2026-10-15', 3), ('2026-10-16', 1), ('2026-10-17', 5), ('2026-10-18', 6), ('2026-10-19', 2), ('2026-10-20', 1), ('2026-10-21', 1), ('2026-10-22', 1), ('2026-10-23', 1), ('2026-10-24', 1), ('2026-10-25', 1), ('2026-10-26', 1), ('2026-10-27', 1), ('2026-10-28', 1), ('2026-10-29', 1), ('2026-10-30', 3), ('2026-10-31', 4)]
+
+completeness of the detector-days below 0.9: min, median, max = (0.1042, 0.5, 0.8958)
+
+clock-change days (intervals observed per detector-day, most common):
+   2026-10-03 [(92, 532), (55, 1)]
+   2026-10-04 [(91, 532), (57, 1)]
+
+other blocking checks in the same run: see results/real_pipeline.txt
+tables built: [('fct_volume_15min', 1577675), ('fct_volume_hourly', 14835), ('fct_detector_health', 16532)]
+ops.pipeline_runs after the D45 run: one row, status success

@@ -1,0 +1,18 @@
+Busiest hour of the week across the top 20 sites, October 2026 (local Melbourne time).
+Method: vehicles per local clock hour summed over the 20 sites (fct_volume_hourly), then the
+mean over every occurrence of that weekday and hour in the month. Missing intervals are not filled.
+Database: data/warehouse/real.duckdb (results/real_pipeline.txt). Label: measured (host CPU), one run. Data: real.
+Source: Department of Transport and Planning (Victoria), Traffic Signal Volume Data, CC BY 4.0.
+
+Top 5 weekday-hours (weekday, hour starting, mean vehicles in that hour, occurrences):
+  Wednesday 17:00  176,487  (4)
+  Tuesday   17:00  174,930  (4)
+  Monday    17:00  174,140  (4)
+  Thursday  17:00  173,302  (5)
+  Wednesday 16:00  172,732  (4)
+
+Quietest weekday-hour: Tuesday 02:00, 17,436 vehicles
+
+Peak hour by day type (mean vehicles in that hour): weekday 17:00 174,040, weekend 12:00 157,127
+
+Vehicles counted at the 20 sites in October: 82,134,747

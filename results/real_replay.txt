@@ -1,0 +1,17 @@
+# python -m ingest.replay --file data/raw/traffic_signal_volume_data_october_2026.zip --top-sites 20 --speed 0, 2026-11-17, against the compose stack on macOS (Apple M3). Exit 0, 121 s wall time. Label: measured (host CPU), one run. Data: real (counts only).
+# Source: Department of Transport and Planning (Victoria), Traffic Signal Volume Data, CC BY 4.0.
+# Saved output with terminal colour codes removed and the repository path shown as <repo>.
+
+{"read": {"files": ["VSDATA_20261001.csv", "VSDATA_20261002.csv", "VSDATA_20261003.csv", "VSDATA_20261004.csv", "VSDATA_20261005.csv", "VSDATA_20261006.csv", "VSDATA_20261007.csv", "VSDATA_20261008.csv", "VSDATA_20261009.csv", "VSDATA_20261010.csv", "VSDATA_20261011.csv", "VSDATA_20261012.csv", "VSDATA_20261013.csv", "VSDATA_20261014.csv", "VSDATA_20261015.csv", "VSDATA_20261016.csv", "VSDATA_20261017.csv", "VSDATA_20261018.csv", "VSDATA_20261019.csv", "VSDATA_20261020.csv", "VSDATA_20261021.csv", "VSDATA_20261022.csv", "VSDATA_20261023.csv", "VSDATA_20261024.csv", "VSDATA_20261025.csv", "VSDATA_20261026.csv", "VSDATA_20261027.csv", "VSDATA_20261028.csv", "VSDATA_20261029.csv", "VSDATA_20261030.csv", "VSDATA_20261031.csv"], "columns_seen": ["NB_SCATS_SITE", "QT_INTERVAL_COUNT", "NB_DETECTOR", "V00", "V01", "V02", "V03", "V04", "V05", "V06", "V07", "V08", "V09", "V10", "V11", "V12", "V13", "V14", "V15", "V16", "V17", "V18", "V19", "V20", "V21", "V22", "V23", "V24", "V25", "V26", "V27", "V28", "V29", "V30", "V31", "V32", "V33", "V34", "V35", "V36", "V37", "V38", "V39", "V40", "V41", "V42", "V43", "V44", "V45", "V46", "V47", "V48", "V49", "V50", "V51", "V52", "V53", "V54", "V55", "V56", "V57", "V58", "V59", "V60", "V61", "V62", "V63", "V64", "V65", "V66", "V67", "V68", "V69", "V70", "V71", "V72", "V73", "V74", "V75", "V76", "V77", "V78", "V79", "V80", "V81", "V82", "V83", "V84", "V85", "V86", "V87", "V88", "V89", "V90", "V91", "V92", "V93", "V94", "V95", "NM_REGION", "CT_RECORDS", "QT_VOLUME_24HOUR", "CT_ALARM_24HOUR"], "volume_columns": 96, "rows_read": 3709309, "rows_skipped": 0, "skip_reasons": {}, "readings": 1577675, "blank_intervals": 0, "missing_intervals": 41269, "nonexistent_local_times": 0, "unreadable_values": 0}}
+{"plan": {"top_sites": 20, "sites": 20, "readings": 1577675}}
+{
+  "summary": {
+    "batches_sent": 3156,
+    "batches_failed": 0,
+    "readings_sent": 1577675,
+    "accepted": 1577675,
+    "rejected": 0,
+    "retries": 0,
+    "reject_reasons": {}
+  }
+}
