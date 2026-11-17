@@ -1,0 +1,52 @@
+Stage 3 stack checks, 2026-11-17T01:02:53Z, after make demo (synthetic data: 2 days, 5 sites, 2 detectors)
+Label: measured (host CPU), one run. Data: simulated.
+
+$ curl -s localhost:8000/health
+{"status":"ok","queue":true,"bucket":true}
+HTTP 200
+
+$ curl -s 'localhost:8000/v1/sites/1028/forecast?horizon=4'
+{"site_id":"1028","horizon":4,"last_observed":"2026-03-03T14:00:00Z","data_source":"synthetic","points":[{"interval_end":"2026-03-03T14:15:00Z","seasonal_naive":null,"trailing_mean_4w":null},{"interval_end":"2026-03-03T14:30:00Z","seasonal_naive":null,"trailing_mean_4w":null},{"interval_end":"2026-03-03T14:45:00Z","seasonal_naive":null,"trailing_mean_4w":null},{"interval_end":"2026-03-03T15:00:00Z","seasonal_naive":null,"trailing_mean_4w":null}]}
+HTTP 200
+
+$ curl -s localhost:9090/api/v1/targets  (job, scrape URL, health)
+api http://api:8000/metrics up 
+worker http://worker:9101/metrics up 
+
+$ curl -s localhost:3000/api/health
+{
+  "database": "ok",
+  "version": "12.2.0",
+  "commit": "92f1fba9b4b6700328e99e97328d6639df8ddc3d"
+}
+HTTP 200
+
+$ curl -s 'localhost:3000/api/search?type=dash-db'  (uid, title)
+mcb-overview | mini-city-brain: ingest and pipeline
+
+$ curl -s 'localhost:9090/api/v1/query?query=mcb_api_readings_accepted_total'
+{"status":"success","data":{"resultType":"vector","result":[{"metric":{"__name__":"mcb_api_readings_accepted_total","instance":"api:8000","job":"api"},"value":[1794877401.004,"1920"]}]}}
+
+$ curl -s 'localhost:9090/api/v1/query?query=mcb_pipeline_last_success_timestamp_seconds'
+{"status":"success","data":{"resultType":"vector","result":[{"metric":{"__name__":"mcb_pipeline_last_success_timestamp_seconds","instance":"api:8000","job":"api"},"value":[1794877401.015,"1794877346.586866"]}]}}
+(a non-zero value means the api read ops.pipeline_runs from data/warehouse/mcb.duckdb through the bind mount)
+
+$ make dagster-ui  (started in the background, then stopped)
+$ curl -s -o /dev/null -w '%{http_code}' http://localhost:3001/
+HTTP 200  
+$ curl -s http://localhost:3001/graphql  (repositories and jobs)
+{"data":{"repositoriesOrError":{"nodes":[{"name":"__repository__","jobs":[{"name":"__ASSET_JOB"},{"name":"mcb_pipeline"}]}]}}}
+
+Dashboard fix check, 2026-11-17T04:11:59Z, after make demo (synthetic data)
+$ curl -s localhost:9090/api/v1/query --data-urlencode 'query=time() - (mcb_pipeline_last_success_timestamp_seconds > 0)'
+{"status":"success","data":{"resultType":"vector","result":[]}}
+$ the old expression, for comparison
+{"status":"success","data":{"resultType":"vector","result":[]}}
+$ curl -s localhost:3000/api/dashboards/uid/mcb-overview  (expr and axis of the two fixed panels)
+Rejection rate (share of readings rejected) | sum(rate(mcb_api_readings_rejected_total[1m])) / clamp_min(sum(rate(mcb_api_readings_accepted_total[1m])) + sum(rate(mcb_api_readings_rejected_total[1m])), 1e-9) | unit percentunit min 0 max 1
+Time since last pipeline success | time() - (mcb_pipeline_last_success_timestamp_seconds > 0) | unit s min None max None
+(The two empty results above were queried before Prometheus's next scrape after the pipeline run. Queried again:)
+$ new expression: time() - (mcb_pipeline_last_success_timestamp_seconds > 0)
+{"status":"success","data":{"resultType":"vector","result":[{"metric":{"instance":"api:8000","job":"api"},"value":[1794888734.743,"16.496968984603882"]}]}}
+$ old expression: (time() - mcb_pipeline_last_success_timestamp_seconds) * (mcb_pipeline_last_success_timestamp_seconds > 0)
+{"status":"success","data":{"resultType":"vector","result":[{"metric":{"instance":"api:8000","job":"api"},"value":[1794888734.852,"29805866327.80987"]}]}}

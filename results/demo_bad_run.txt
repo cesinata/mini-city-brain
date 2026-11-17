@@ -1,0 +1,161 @@
+# make demo-bad after make demo-down, 2026-11-17, same machine. Script exit 1 (make exit 2), 185 s wall time including stack start (measured (host CPU), one run). Data: synthetic (simulated).
+# Saved output with terminal colour codes removed and the repository path shown as <repo>.
+
+bash scripts/demo_bad.sh
+ Image mini-city-brain-api Building 
+ Image mini-city-brain-worker Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 1.03kB done
+#1 DONE 0.0s
+
+#2 [worker internal] load build definition from Dockerfile
+#2 transferring dockerfile: 1.01kB done
+#2 DONE 0.0s
+
+#3 [api internal] load build definition from Dockerfile
+#3 transferring dockerfile: 958B done
+#3 DONE 0.0s
+
+#4 [api internal] load metadata for docker.io/library/python:3.13.5-slim
+#4 ...
+
+#5 [auth] library/python:pull token for registry-1.docker.io
+#5 DONE 0.0s
+
+#4 [api internal] load metadata for docker.io/library/python:3.13.5-slim
+#4 DONE 1.4s
+
+#6 [api internal] load .dockerignore
+#6 transferring context: 2B done
+#6 DONE 0.0s
+
+#7 [worker 1/8] FROM docker.io/library/python:3.13.5-slim@sha256:4c2cf9917bd1cbacc5e9b07320025bdb7cdf2df7b0ceaccb55e9dd7e30987419
+#7 resolve docker.io/library/python:3.13.5-slim@sha256:4c2cf9917bd1cbacc5e9b07320025bdb7cdf2df7b0ceaccb55e9dd7e30987419 done
+#7 DONE 0.0s
+
+#8 [worker internal] load build context
+#8 transferring context: 1.20kB done
+#8 DONE 0.0s
+
+#9 [api internal] load build context
+#9 transferring context: 2.28kB done
+#9 DONE 0.0s
+
+#10 [worker 3/8] COPY requirements/worker.txt requirements/constraints.txt /tmp/requirements/
+#10 CACHED
+
+#11 [worker 5/8] COPY services/__init__.py services/__init__.py
+#11 CACHED
+
+#12 [worker 7/8] COPY services/worker services/worker
+#12 CACHED
+
+#13 [worker 6/8] COPY services/common services/common
+#13 CACHED
+
+#14 [worker 4/8] RUN pip install -r /tmp/requirements/worker.txt -c /tmp/requirements/constraints.txt     && rm -rf /tmp/requirements
+#14 CACHED
+
+#15 [api 3/9] COPY requirements/api.txt requirements/constraints.txt /tmp/requirements/
+#15 CACHED
+
+#16 [api 8/9] COPY services/api services/api
+#16 CACHED
+
+#17 [api 7/9] COPY forecast forecast
+#17 CACHED
+
+#18 [api 2/8] WORKDIR /app
+#18 CACHED
+
+#19 [api 6/9] COPY services/common services/common
+#19 CACHED
+
+#20 [api 5/9] COPY services/__init__.py services/__init__.py
+#20 CACHED
+
+#21 [api 4/9] RUN pip install -r /tmp/requirements/api.txt -c /tmp/requirements/constraints.txt     && rm -rf /tmp/requirements
+#21 CACHED
+
+#22 [worker 8/8] RUN useradd --system --uid 10001 --no-create-home app
+#22 CACHED
+
+#23 [api 9/9] RUN useradd --system --uid 10001 --no-create-home app
+#23 CACHED
+
+#24 [worker] exporting to image
+#24 exporting layers done
+#24 exporting manifest sha256:e61562b92f5b9a3a881c7cf11ad11df23de18161f71fec9b32fbd176e22f4112 done
+#24 exporting config sha256:05d72850da0eed1bae70efb1651b0906ce178695d39604df1d25aa91eb999f07 done
+#24 exporting attestation manifest sha256:6c8ce3b1f106d7ecae31937f4417266910b15379487ff0264f7c031483d112f5 done
+#24 exporting manifest list sha256:db0061122612237afe823af4c9a5a00edad35da4428a57ffeab7464232f00657 done
+#24 naming to docker.io/library/mini-city-brain-worker:latest done
+#24 unpacking to docker.io/library/mini-city-brain-worker:latest done
+#24 DONE 0.0s
+
+#25 [api] exporting to image
+#25 exporting layers done
+#25 exporting manifest sha256:406b30f1e5394227eca97b2aeb8c6c5bb7b0d142e17f6de675b36e3f30e7137d done
+#25 exporting config sha256:52b54c33bd2552efaf8291a917172b965dbf88cfc0de2352006a3c21d1438daa done
+#25 exporting attestation manifest sha256:9da90ae39f119897e4097663d09897e10b59e775d6aeeea96eff599c4a72d9c0 done
+#25 exporting manifest list sha256:46560506501012beca334c0fb48c9be4888897cd0aa45741bf6bd06a9e9edd1d done
+#25 naming to docker.io/library/mini-city-brain-api:latest done
+#25 unpacking to docker.io/library/mini-city-brain-api:latest done
+#25 DONE 0.0s
+
+#26 [worker] resolving provenance for metadata file
+#26 DONE 0.0s
+
+#27 [api] resolving provenance for metadata file
+#27 DONE 0.0s
+ Image mini-city-brain-api Built 
+ Image mini-city-brain-worker Built 
+ Network mini-city-brain_default Creating 
+ Network mini-city-brain_default Creating 
+ Network mini-city-brain_default Created 
+ Network mini-city-brain_default Created 
+ Container mini-city-brain-emulator-1 Creating 
+ Container mini-city-brain-emulator-1 Created 
+ Container mini-city-brain-init-1 Creating 
+ Container mini-city-brain-init-1 Created 
+ Container mini-city-brain-worker-1 Creating 
+ Container mini-city-brain-api-1 Creating 
+ Container mini-city-brain-api-1 Created 
+ Container mini-city-brain-worker-1 Created 
+ Container mini-city-brain-prometheus-1 Creating 
+ Container mini-city-brain-prometheus-1 Created 
+ Container mini-city-brain-grafana-1 Creating 
+ Container mini-city-brain-grafana-1 Created 
+ Container mini-city-brain-emulator-1 Starting 
+ Container mini-city-brain-emulator-1 Started 
+ Container mini-city-brain-emulator-1 Waiting 
+ Container mini-city-brain-emulator-1 Healthy 
+ Container mini-city-brain-init-1 Starting 
+ Container mini-city-brain-init-1 Started 
+ Container mini-city-brain-init-1 Waiting 
+ Container mini-city-brain-init-1 Exited 
+ Container mini-city-brain-api-1 Starting 
+ Container mini-city-brain-worker-1 Starting 
+ Container mini-city-brain-api-1 Started 
+ Container mini-city-brain-worker-1 Started 
+ Container mini-city-brain-prometheus-1 Starting 
+ Container mini-city-brain-prometheus-1 Started 
+ Container mini-city-brain-grafana-1 Starting 
+ Container mini-city-brain-grafana-1 Started 
+healthy after 1s: http://localhost:8000/health
+demo-bad: sending a batch with a gap, a negative value and a duplicate send
+  request 1: HTTP 202, accepted 76, rejected 1 ['volume']
+  request 2: HTTP 202, accepted 76, rejected 1 ['volume']
+demo-bad: running the pipeline on what reached the bucket
+01:12:47  Running with dbt=1.12.6
+01:12:47  Registered adapter: duckdb=1.11.0
+01:12:47  Performance info: <repo>/data/dbt_target/perf_info.json
+PIPELINE FAILED
+------------------------------------------------------------
+  check: duplicate_rate
+  asset: raw_objects_loaded
+  why:   76 of 152 raw rows repeat a key (rate 0.5000, limit 0.01)
+
+Nothing downstream of a failed check was built.
+{"demo_bad": "pipeline refused the faulty data", "exit": 1}
+make: *** [demo-bad] Error 1

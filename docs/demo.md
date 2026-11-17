@@ -42,17 +42,25 @@ It sends one batch with a negative volume, a 20-interval gap, and sends that bat
 
 - The API response for each request lists the rejected reading and the reason (`volume`).
 - The duplicate send reaches the bucket, so the `duplicate_rate` check fails and the run stops before any model is built.
-- The command exits non-zero and prints a block naming the check, the asset and the reason, like this (from an in-process run on synthetic data):
+- The command exits non-zero and prints a block naming the check, the asset and the reason. From a run against the Docker stack on 2026-11-17, started after `make demo-down` (`results/demo_bad_run.txt`; synthetic data, so `simulated`):
 
 ```
+  request 1: HTTP 202, accepted 76, rejected 1 ['volume']
+  request 2: HTTP 202, accepted 76, rejected 1 ['volume']
+demo-bad: running the pipeline on what reached the bucket
 PIPELINE FAILED
 ------------------------------------------------------------
   check: duplicate_rate
   asset: raw_objects_loaded
-  why:   96 of 1800 raw rows repeat a key (rate 0.0533, limit 0.01)
+  why:   76 of 152 raw rows repeat a key (rate 0.5000, limit 0.01)
+Nothing downstream of a failed check was built.
 ```
 
+Without `make demo-down` first, the bucket still holds the clean readings from `make demo`, so the rate is lower but still over the limit: 76 of 2072 rows, rate 0.0367 (`results/demo_bad_after_demo.txt`, `simulated`). The script waits until the bucket holds every accepted reading before it runs the pipeline (decisions D36).
+
 Rejected readings also show in Grafana as the "Rejection rate" panel.
+
+In `make demo` the "Ingest rate" panel stays flat: the replay at full speed finishes in about a second, so Prometheus (scraping every 5 seconds) only sees the counter jump, not a rate. A slower replay against a running stack, for example `make replay SPEED=60` (one synthetic day in about 24 minutes), should show a rate; that has not been tried.
 
 ## 4. Publish the page with GitHub Pages
 
@@ -86,5 +94,9 @@ There is no GIF in the repo yet, and the README does not show one. After recordi
 | Static page in a real browser | Visual check not done |
 | `make pipeline` on synthetic data | Run, passed (`results/pipeline_synthetic_ok.txt`) |
 | `make demo-bad` logic in-process (API, queue, worker, bucket, pipeline) | Run, exits non-zero (`tests/test_demo.py`) |
-| `make demo`, `make demo-bad`, Grafana, `make up` | Not run: no Docker |
+| `make demo` against Docker | Run 2026-11-17, exit 0, 189 s wall time (measured (host CPU), one run; `results/demo_run.txt`) |
+| `make demo-bad` against Docker | Run 2026-11-17, exits non-zero with the block above (`results/demo_bad_run.txt`) |
+| `make up`, `make replay`, smoke check, `make down` | Run 2026-11-17, each exit 0 (`results/compose_targets.txt`) |
+| API health, forecast endpoint, Prometheus targets, Grafana health and dashboard, Dagster UI on port 3001 | Checked with `curl` on 2026-11-17 (`results/stack_checks.txt`) |
+| Grafana dashboard, Dagster UI and API docs by eye | Looked at 2026-11-17. Two Grafana panels were wrong and are fixed (decisions D39) |
 | Pages workflow | Not run (needs GitHub). The real-data download is tested with a fake HTTP client only |

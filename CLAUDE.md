@@ -78,20 +78,20 @@ Notes:
 
 ## Commands
 
-Status of each as of the rebuild. "Run" means it was run on the build machine and passed.
+Status of each as of 2026-11-17. "Run" means it was run on the owner's laptop (macOS, Docker Desktop) and passed.
 
 ```
 make setup       # create venv, install pinned dependencies (run, in a scratch venv from the same files)
 make lint        # ruff check and ruff format --check (run)
 make test        # pytest; unit tests use an in-process Moto emulator, no Docker (run)
-make up / down   # docker compose stack (not run: no Docker)
-make replay      # replay synthetic data into a running API (not run against Docker; the code is tested)
+make up / down   # docker compose stack; down also stops the obs profile (run)
+make replay      # replay synthetic data into a running API (run)
 make pipeline    # Dagster job once: load -> dbt build -> blocking checks (run, synthetic data)
 make site        # write site/data/summary.json from the warehouse (run through the tests)
-make demo        # stack up, replay 2 synthetic days for 5 sites, run pipeline, print URLs (not run: no Docker)
-make demo-bad    # inject faulty data; the pipeline must fail readably (logic run in-process; not run against Docker)
-make demo-down   # stop the stack and remove volumes (not run: no Docker)
-make dagster-ui  # Dagster UI on port 3001 (not run: no browser)
+make demo        # stack up, replay 2 synthetic days for 5 sites, run pipeline, print URLs (run)
+make demo-bad    # inject faulty data; the pipeline must fail readably (run; exits non-zero by design)
+make demo-down   # stop the stack and remove volumes (run)
+make dagster-ui  # Dagster UI on port 3001 (run; served HTTP 200, not opened in a browser)
 make preflight   # bash scripts/preflight.sh --tree (run)
 make review-bundle  # bash scripts/make_review_bundle.sh (writes review.zip, local only)
 ```
