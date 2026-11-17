@@ -277,3 +277,23 @@ Each entry has an ID, date, choice, reason and how to revert. New entries go at 
 - **Reason:** The first look at the dashboard showed ages in the hundreds of thousands of years. The old query multiplied the age by `(gauge > 0)`, and in PromQL a comparison without `bool` keeps the gauge's own value (about 1.8 billion), not 1. Against the live stack the old query gave 29805866327.8 s and the new one 16.5 s (`results/stack_checks.txt`, measured (host CPU), one run). With all-zero data Grafana picked an axis of 0 to 100 for a fraction, shown as 0% to 10000%.
 - **Check:** `tests/test_observability.py` asserts both panel definitions.
 - **Revert:** Edit `observability/grafana/dashboards/mcb-overview.json`.
+
+## D40. Hero illustration: one source file, copied for the page (2026-11-17)
+
+- **Choice:** The README shows `docs/media/hero-isometric.svg` directly under the summary sentence. The page shows the same file from `data/hero-isometric.svg`; `site/export.py` copies it there from `docs/media/`, as it already did for `architecture.svg` (`MEDIA_FILES`). Both use the same alt text. The embedded C2PA content-credentials manifest is kept as provided.
+- **Reason:** `site/` is served on its own (locally and on Pages), so it cannot reach `docs/media/`. Copying at export time keeps one tracked file instead of two that could drift. The manifest holds no personal data (checked by decoding it: tool name, signer, timestamps) and records that the image was made with Claude, which matches how this repo discloses AI use.
+- **Check:** `tests/test_site.py` checks that every image path in the README and the page resolves, that the copied files match their source byte for byte, that the hero alt text is the same in both, and that the served page returns the hero with HTTP 200.
+- **Revert:** Remove the `<img id="hero">` tag, the README image line and the name from `MEDIA_FILES`.
+
+## D41. Stage commits after the early merge (2026-11-17)
+
+- **Choice:** `rebuild-v2` was merged into `main` twice before Stage 6 (CI green on both merge commits). Work from Stage 4 on goes on a new branch made from `origin/main`, merged through its own pull request.
+- **Reason:** A new branch from the merged `main` carries no history that GitHub has already merged, whichever merge method was used. The plan's Stage 6 steps that merge `rebuild-v2` and recreate `main` no longer apply as written.
+- **Revert:** Not applicable.
+
+## D42. Demo page layout on wide screens (2026-11-17)
+
+- **Choice:** From 1100 px wide, `site/style.css` switches to a grid up to 1200 px: the title and intro beside the illustration, then "Busiest intersections" and "Data completeness" side by side (3:2), and the heat map, forecast chart, map note and "How it works" at full width. Below 1100 px the single column stays as it was.
+- **Reason:** On a desktop screen the page stayed a 960 px phone-style column. The charts are SVGs drawn 720 units wide, so the wide ones keep the full width and the bar chart gets the larger share of its row, to keep labels readable. The completeness table moves up beside the bar chart on desktop only; it has nothing focusable, so keyboard order does not change.
+- **Check:** headless Chrome screenshots at 1600, 1280 and 600 px (not saved); `tests/test_site.py` checks that the desktop grid places every section.
+- **Revert:** Delete the `@media (min-width: 1100px)` block and the `s-*` classes.

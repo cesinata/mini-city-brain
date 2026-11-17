@@ -4,6 +4,8 @@
 
 mini-city-brain replays public Victorian traffic-signal volume data as a stream of readings and sends them through an API, a queue and object storage into DuckDB, where dbt models and data-quality checks turn them into busy-hour tables and a simple forecast. It runs on one laptop with Docker and costs nothing.
 
+![Isometric city feeding a pipeline of eight stages (replay, API, queue, worker, raw bucket, DuckDB and dbt, checks, forecast) that ends at a dashboard.](docs/media/hero-isometric.svg)
+
 **Live demo:** [not published yet](docs/demo.md)
 
 ## Why this exists

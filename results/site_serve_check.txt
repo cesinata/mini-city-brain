@@ -1,9 +1,18 @@
-Command: python -m http.server (serving site/ files + data/summary.json built from 6 synthetic weeks), then curl
-GET /index.html -> 200, 3161 bytes
-GET /style.css -> 200, 2905 bytes
-GET /app.js -> 200, 8491 bytes
-GET /data/summary.json -> 200, 51969 bytes
-GET /data/architecture.svg -> 200, 4329 bytes
-<h1>When are Melbourne's signalised intersections busiest, and how close does a simple forecast get?</h1>
-Node fake-DOM render of app.js against a summary.json: tests/test_site.py::test_app_js_renders_without_errors_against_a_fake_dom (passed)
-Visual check not done (no browser opened).
+Command: python -m http.server --directory site 8000, then curl. 2026-11-17T04:34:54Z
+site/data built by: python -m scripts.pages_build --out site/data with REAL_DATA_ENABLED unset (synthetic, 12 sites, 42 days; nothing downloaded)
+Label: measured (host CPU), one run. Data: simulated.
+GET /index.html -> 200, 3407 bytes, text/html
+GET /style.css -> 200, 2995 bytes, text/css
+GET /app.js -> 200, 8491 bytes, text/javascript
+GET /data/summary.json -> 200, 170234 bytes, application/json
+GET /data/architecture.svg -> 200, 4329 bytes, image/svg+xml
+GET /data/hero-isometric.svg -> 200, 52142 bytes, image/svg+xml
+
+Hero tag in the served page:
+<img id="hero" class="hero" src="data/hero-isometric.svg" alt="Isometric city feeding a pipeline of eight stages (replay, API, queue, worker, raw bucket, DuckDB and dbt, checks, forecast) that ends at a dashboard." width="1280" height="720">
+
+Banner text from summary.json:
+data_label = synthetic
+
+Node fake-DOM render of app.js: tests/test_site.py::test_app_js_renders_without_errors_against_a_fake_dom (passed)
+Visual check in a browser: by the owner at the Stage 4 gate.

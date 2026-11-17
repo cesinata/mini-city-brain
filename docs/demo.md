@@ -11,7 +11,7 @@ make site                # writes site/data/summary.json (gitignored)
 python -m http.server --directory site 8000
 ```
 
-Open `http://localhost:8000`. With synthetic data the page shows a large "SYNTHETIC DATA" banner. Nothing is downloaded.
+Open `http://localhost:8000`. With synthetic data the page shows a large "SYNTHETIC DATA" banner. Nothing is downloaded. `make site` also copies the hero illustration and the diagram from `docs/media/` into `site/data/`, which is where the page loads them from.
 
 ## 2. One-command demo (needs Docker)
 
