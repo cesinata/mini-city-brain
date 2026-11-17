@@ -106,7 +106,7 @@ Contains Traffic Signal Volume Data from the Department of Transport and Plannin
 
 CI: run on GitHub on 2026-11-16 for the push and the pull request of commit `4098a88`. All five jobs passed (lint, test, terraform, docker-build, compose-smoke; measured (CI runner), 3m40s and 3m20s per run). GitHub warns that `actions/checkout`, `actions/setup-python` and `hashicorp/setup-terraform` at the pinned versions target Node.js 20.
 
-Pages workflow: not run. The YAML parses (Python `yaml.safe_load`) and `tests/test_pages_build.py` checks permissions and action pins. `actionlint` was not available: not checked.
+Pages workflow: run by hand on GitHub on 2026-11-17 from `main`, with `REAL_DATA_ENABLED` unset. Both jobs passed and the page is served at https://cesinata.github.io/mini-city-brain/ with synthetic data (Actions run 44034041835). The real-data path has not run. `tests/test_pages_build.py` checks permissions and action pins; `actionlint` was not available: not checked.
 
 ## 8. Not tested at all
 

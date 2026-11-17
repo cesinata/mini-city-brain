@@ -324,3 +324,10 @@ Each entry has an ID, date, choice, reason and how to revert. New entries go at 
 - **Result:** the same October data now passes with a warning for the 53 detector-days (`results/real_pipeline.txt`). It would fail if incomplete detector-days were about three times as common, or if one bad day hit many detectors at once.
 - **Check:** `tests/test_orchestration.py` (strict default, warning below the limit, failure above it, the warning in the run summary) and `tests/test_warehouse_dbt.py` (1 of 200 incomplete detector-days passes, 3 of 200 fail).
 - **Revert:** set `max_incomplete_share` to 0.
+
+## D46. Pages and README screenshots before the AI-log review (2026-11-17, owner's request)
+
+- **Choice:** The GitHub Pages step and the README screenshots come before the AI-log and truth-pass step, because the owner needs the repo in a portfolio now. The screenshots were taken with headless Chrome (a throwaway browser profile, no browser bar) after replaying the real October 2026 month: the demo page built from that month, the Grafana dashboard during the replay, and the Dagster asset graph after a run recorded in the local `dagster_home/`.
+- **Consequences:** `docs/ai-log.md` is still uncommitted and holds `DRAFT` entries, so the README's link to it does not resolve on GitHub until the owner confirms and commits it. The demo GIF is not made.
+- **Revert:** Not applicable.
+- **Update (2026-11-17):** the owner enabled Pages and ran the workflow on `main`; it passed and the page is live at https://cesinata.github.io/mini-city-brain/ with synthetic data. The README links to it. The banner text is now 14 px, and `docs/media/architecture.svg` was redrawn so every label fits its box and no arrows cross.
