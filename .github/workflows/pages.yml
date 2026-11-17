@@ -25,15 +25,15 @@ jobs:
       # licence is confirmed (see docs/demo.md). Otherwise the page is built from synthetic data.
       REAL_DATA_ENABLED: ${{ vars.REAL_DATA_ENABLED }}
     steps:
-      - uses: actions/checkout@v4.2.2
-      - uses: actions/setup-python@v5.6.0
+      - uses: actions/checkout@v5.1.0
+      - uses: actions/setup-python@v6.3.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
       - run: pip install -r requirements/direct.txt -c requirements/constraints.txt
       - name: Run the pipeline and export the page data
         run: python -m scripts.pages_build --out site/data
-      - uses: actions/configure-pages@v5.0.0
-      - uses: actions/upload-pages-artifact@v3.0.0
+      - uses: actions/configure-pages@v6.0.0
+      - uses: actions/upload-pages-artifact@v5.0.0
         with:
           path: site
 
@@ -49,4 +49,4 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4.0.5
+        uses: actions/deploy-pages@v5.0.1

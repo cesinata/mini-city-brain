@@ -1,6 +1,6 @@
 # Third-party software
 
-Every dependency, its pinned version and its licence. Python licences come from each package's own metadata (the `License-Expression`, `License` or `Classifier` field of the installed package). Where the metadata does not state a licence, the entry says "not checked". Nothing here was checked against a project web page.
+Every dependency, its pinned version and its licence. Python licences come from each package's own metadata (the `License-Expression`, `License` or `Classifier` field of the installed package). Where the metadata does not state a licence, the entry says "not checked". Python package licences were not checked against project web pages; Docker images, Terraform and GitHub Actions were (sections below).
 
 Versions are exact. Python packages were resolved with releases uploaded on or before 2026-10-27, at least 14 days before the build date (2026-11-10). The full pin list is `requirements/constraints.txt`.
 
@@ -172,38 +172,36 @@ Direct dependencies first (marked **direct**), then everything they pull in.
 
 ## Docker images
 
-Pinned by tag in `docker-compose.yml` and the Dockerfiles. Every tag except `localstack/localstack` was pulled and run on 2026-11-17 (`make demo`), and CI pulls the ones the compose smoke test uses. No licence was read for any of them.
+Pinned by tag in `docker-compose.yml` and the Dockerfiles. Every tag except `localstack/localstack` was pulled and run on 2026-11-17 (`make demo`), and CI pulls the ones the compose smoke test uses. Licences were read on 2026-11-17 from each project's source repository on GitHub (the licence GitHub reports for the repository, and the licence file where GitHub reports "Other"). Base-image contents (Debian packages and so on) carry their own licences, which were not checked.
 
-| Image | Tag | Used for | Licence |
+| Image | Tag | Used for | Licence (source repository) |
 | --- | --- | --- | --- |
-| python | 3.13.5-slim | API and worker images | not checked |
-| motoserver/moto | 5.2.4 | local AWS emulator | not checked (the Python package `moto` 5.2.4 is listed above) |
-| hashicorp/terraform | 1.15.6 | `init` service | not checked |
-| prom/prometheus | v3.5.0 | `obs` profile | not checked |
-| grafana/grafana | 12.2.0 | `obs` profile | not checked |
-| localstack/localstack | 4.9.2 | optional `localstack` profile, off by default; needs an account token | not checked |
+| python | 3.13.5-slim | API and worker images | Python itself: Python Software Foundation License (python/cpython); image build files: MIT (docker-library/python) |
+| motoserver/moto | 5.2.4 | local AWS emulator | Apache-2.0 (getmoto/moto) |
+| hashicorp/terraform | 1.15.6 | `init` service | Business Source License 1.1, licensor IBM (LICENSE file at the v1.15.6 tag of hashicorp/terraform) |
+| prom/prometheus | v3.5.0 | `obs` profile | Apache-2.0 (prometheus/prometheus) |
+| grafana/grafana | 12.2.0 | `obs` profile | AGPL-3.0 (grafana/grafana) |
+| localstack/localstack | 4.9.2 | optional `localstack` profile, off by default; needs an account token | source repository Apache-2.0 (localstack/localstack); the terms of the token-gated image were not checked |
 
 ## Terraform and provider
 
 | Component | Version | Licence |
 | --- | --- | --- |
-| Terraform | 1.15.6 (`>= 1.15.0, < 2.0.0`) | Business Source License 1.1 (HashiCorp; not checked for 1.15.6) |
-| hashicorp/aws provider | 6.22.1 | not checked |
+| Terraform | 1.15.6 (`>= 1.15.0, < 2.0.0`) | Business Source License 1.1, licensor IBM (LICENSE file at the v1.15.6 tag, read 2026-11-17) |
+| hashicorp/aws provider | 6.22.1 | MPL-2.0 (hashicorp/terraform-provider-aws, read 2026-11-17) |
 
 ## GitHub Actions
 
-Pinned to full version tags in `.github/workflows/`. Licences were not checked.
+Pinned to full version tags in `.github/workflows/`. On 2026-11-17 each tag was looked up on GitHub: its release date, and the Node.js version in its `action.yml` (all run on Node.js 24; `upload-pages-artifact` is a composite action that calls `actions/upload-artifact` v7.0.0). Each is the oldest major version that runs on Node.js 24, at its newest patch release, and each release is more than 14 days old. Licences are the ones GitHub reports for each repository (decisions D47).
 
-| Action | Version | Licence |
-| --- | --- | --- |
-| actions/checkout | v4.2.2 | not checked |
-| actions/setup-python | v5.6.0 | not checked |
-| hashicorp/setup-terraform | v3.1.2 | not checked |
-| actions/configure-pages | v5.0.0 | not checked |
-| actions/upload-pages-artifact | v3.0.0 | not checked |
-| actions/deploy-pages | v4.0.5 | not checked |
-
-The tag versions were chosen from the tool's knowledge and were not looked up on GitHub. If a tag does not exist, CI fails at the first step and the owner picks a current tag.
+| Action | Version | Released | Licence |
+| --- | --- | --- | --- |
+| actions/checkout | v5.1.0 | 2026-07-20 | MIT |
+| actions/setup-python | v6.3.0 | 2026-06-24 | MIT |
+| hashicorp/setup-terraform | v4.0.1 | 2026-05-12 | MPL-2.0 |
+| actions/configure-pages | v6.0.0 | 2026-03-25 | MIT |
+| actions/upload-pages-artifact | v5.0.0 | 2026-04-10 | MIT |
+| actions/deploy-pages | v5.0.1 | 2026-09-01 | MIT |
 
 ## Front-end libraries
 
@@ -220,5 +218,6 @@ Data sources and their licences are in [data.md](data.md). No map tiles are used
 | `docs/media/architecture.svg` | hand-written SVG in this repo | MIT, as the rest of the repo |
 | `docs/media/hero-isometric.svg` | made with Claude (Anthropic) for this repo; no third-party artwork. It carries a signed C2PA content-credentials manifest (`<metadata>`) that records this. | MIT, as the rest of the repo |
 | `docs/media/demo-page-real-october-2026.png` | screenshot of this repo's demo page (headless Chrome, 2026-11-17); shows aggregates of the real October 2026 data | screenshot: MIT; the data shown: CC BY 4.0, Department of Transport and Planning (Victoria) |
-| `docs/media/grafana-real-replay.png` | screenshot of Grafana 12.2.0 showing this repo's dashboard | screenshot: MIT; Grafana's licence: not checked |
+| `docs/media/grafana-real-replay.png` | screenshot of Grafana 12.2.0 showing this repo's dashboard | screenshot: MIT; Grafana itself: AGPL-3.0 (see Docker images) |
+| `docs/media/dagster-demo-bad-run.png` | screenshot of the Dagster UI showing the failed `make demo-bad` run (synthetic data), cropped above the stack trace | screenshot: MIT; Dagster's licence is listed with the Python packages above |
 | `docs/media/dagster-asset-graph.png` | screenshot of the Dagster UI (dagster-webserver 1.13.26) showing this repo's assets | screenshot: MIT; Dagster's licence is listed with the Python packages above |

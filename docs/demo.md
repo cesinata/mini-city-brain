@@ -74,7 +74,7 @@ Do this only after you have confirmed the licence on the publisher's own page (s
 
 1. Open **Settings > Secrets and variables > Actions > Variables**.
 2. Add a repository variable named `REAL_DATA_ENABLED` with the value `true`.
-3. Re-run the workflow. It asks the publisher's API for the latest monthly file, downloads it inside the runner, keeps the busiest sites, runs the pipeline and publishes only small aggregates with the attribution line.
+3. Run the workflow again (**Run workflow**, not **Re-run**, so it builds the current `main`). It asks the publisher's API for the monthly files, picks the newest month that has already ended (decisions D48), downloads it inside the runner, keeps the 50 busiest sites, runs the pipeline and publishes only small aggregates with the attribution line. The job summary names the file it used.
 
 If the download, the load or the pipeline checks fail, the workflow builds the synthetic page instead and writes a warning in the job summary. Raw files are never committed or published. To go back, delete the variable or set it to anything other than `true`.
 
@@ -100,4 +100,5 @@ There is no GIF in the repo yet, and the README does not show one. After recordi
 | API health, forecast endpoint, Prometheus targets, Grafana health and dashboard, Dagster UI on port 3001 | Checked with `curl` on 2026-11-17 (`results/stack_checks.txt`) |
 | Grafana dashboard, Dagster UI and API docs by eye | Looked at 2026-11-17. Two Grafana panels were wrong and are fixed (decisions D39) |
 | README screenshots (demo page, Grafana, Dagster asset graph) | Taken 2026-11-17 with headless Chrome after a real October 2026 replay and pipeline run (`docs/media/*.png`) |
+| Failed `make demo-bad` run in the Dagster UI | Screenshot taken 2026-11-17 after `DAGSTER_HOME=$PWD/dagster_home make demo-bad` (`docs/media/dagster-demo-bad-run.png`). No GIF recorded |
 | Pages workflow | Run on GitHub on 2026-11-17 from `main` with `REAL_DATA_ENABLED` unset: build and deploy passed, and https://cesinata.github.io/mini-city-brain/ serves the synthetic page. The real-data download is still tested with a fake HTTP client only |

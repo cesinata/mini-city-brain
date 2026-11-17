@@ -18,7 +18,7 @@ Run: passed.
 make test        # pytest, all of tests/
 ```
 
-Run: passed. These use Moto's `ThreadedMotoServer` as an in-process AWS emulator, DuckDB files in temporary folders, and FastAPI's test client. On 2026-11-17: 187 passed and 2 skipped in 79.22 s (measured (host CPU), one run, `results/test_run.txt`). The 2 skipped tests only run on a machine without Docker.
+Run: passed. These use Moto's `ThreadedMotoServer` as an in-process AWS emulator, DuckDB files in temporary folders, and FastAPI's test client. On 2026-11-17: 190 passed and 2 skipped in 84.72 s (measured (host CPU), one run, `results/test_run.txt`). The 2 skipped tests only run on a machine without Docker.
 
 | File | What it covers |
 | --- | --- |
@@ -33,7 +33,7 @@ Run: passed. These use Moto's `ThreadedMotoServer` as an in-process AWS emulator
 | `tests/test_forecast.py` | baselines, evaluation (with the local days the data covers), endpoint |
 | `tests/test_demo.py` | `demo-bad` exits non-zero in-process; scripts refuse cleanly without Docker; the smoke check counts readings in the bucket and waits for all of them |
 | `tests/test_site.py` | export schema, labels, limits; page served over HTTP, hero image included; `app.js` rendered against a fake DOM (needs Node); image paths in the README and the page resolve to files; one alt text for the hero; the desktop grid places every section |
-| `tests/test_pages_build.py` | real-data gate, fallbacks and warnings (fake HTTP client); workflow permissions and pins |
+| `tests/test_pages_build.py` | real-data gate, fallbacks and warnings (fake HTTP client); the newest complete month is picked (D48); workflow permissions and pins |
 
 ## 3. Terraform
 
@@ -52,7 +52,7 @@ Run: all passed. `terraform apply` against a local Moto server also ran and crea
 make preflight   # bash scripts/preflight.sh --tree
 ```
 
-Run: 0 failures. It warns that `docs/ai-log.md` has draft entries until the owner confirms them.
+Run: 0 failures.
 
 ## 5. Pipeline from the command line
 

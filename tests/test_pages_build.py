@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import zipfile
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 import duckdb
@@ -68,6 +68,38 @@ def labels(db: str) -> set[str]:
 def test_latest_zip_resource_picks_the_newest_zip():
     res = pages_build.latest_zip_resource(FakeHttp(None).get_json(""))
     assert res["name"] == "2026-02"
+
+
+def _zip(name: str, modified: str) -> dict:
+    return {"name": name, "url": f"https://x/{name}.zip", "last_modified": modified}
+
+
+def test_latest_zip_resource_prefers_the_newest_month_that_has_ended():
+    package = {"result": {"resources": [
+        _zip("traffic_signal_volume_data_september_2026", "2026-10-01"),
+        _zip("traffic_signal_volume_data_october_2026", "2026-11-01"),
+        _zip("traffic_signal_volume_data_november_2026", "2026-11-17"),
+    ]}}  # fmt: skip
+    pick = pages_build.latest_zip_resource(package, today=date(2026, 11, 17))
+    assert pick["name"] == "traffic_signal_volume_data_october_2026"
+    first_of_december = pages_build.latest_zip_resource(package, today=date(2026, 12, 1))
+    assert first_of_december["name"] == "traffic_signal_volume_data_november_2026"
+
+
+def test_resource_month_reads_names_and_urls():
+    name = "Traffic Signal Volume Data October 2026"
+    assert pages_build.resource_month({"name": name}) == (2026, 10)
+    assert pages_build.resource_month({"url": "https://x/VSDATA_2026-09.zip"}) == (2026, 9)
+    assert pages_build.resource_month({"name": "Sept-2025"}) == (2025, 9)
+    assert pages_build.resource_month({"name": "readme", "url": "https://x/data.zip"}) is None
+
+
+def test_latest_zip_resource_falls_back_to_last_modified_without_a_month():
+    package = {"result": {"resources": [_zip("a", "2026-01-01"), _zip("b", "2026-03-01")]}}
+    assert pages_build.latest_zip_resource(package, today=date(2026, 11, 17))["name"] == "b"
+    only_current = {"result": {"resources": [_zip("november_2026", "2026-11-17")]}}
+    pick = pages_build.latest_zip_resource(only_current, today=date(2026, 11, 17))
+    assert pick["name"] == "november_2026"
 
 
 def test_latest_zip_resource_errors_when_there_is_no_zip():
