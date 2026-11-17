@@ -212,3 +212,10 @@ None. `site/` is plain HTML, CSS and JavaScript. The charts are drawn as SVG by 
 ## Data and map tiles
 
 Data sources and their licences are in [data.md](data.md). No map tiles are used.
+
+## Images
+
+| File | Source | Licence |
+| --- | --- | --- |
+| `docs/media/architecture.svg` | hand-written SVG in this repo | MIT, as the rest of the repo |
+| `docs/media/hero-isometric.svg` | made with Claude (Anthropic) for this repo; no third-party artwork. It carries a signed C2PA content-credentials manifest (`<metadata>`) that records this. | MIT, as the rest of the repo |

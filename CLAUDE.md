@@ -63,7 +63,7 @@ site/                static demo page (plain HTML/JS), exporter (run as a script
 observability/       Prometheus config, Grafana provisioning and dashboard JSON
 tests/               pytest suites and a small synthetic fixture
 docs/                data.md, decisions.md, third-party.md, testing.md, demo.md, ai-log.md
-docs/media/          diagram (architecture.svg); the demo GIF is added by the owner
+docs/media/          diagram (architecture.svg), hero illustration (hero-isometric.svg); the demo GIF is added by the owner
 scripts/             preflight, review bundle, demo, Pages build and helper scripts
 results/             saved outputs of runs that numbers in the docs come from
 requirements/        pinned dependencies (direct.txt, constraints.txt, per-image files)

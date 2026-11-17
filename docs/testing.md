@@ -18,7 +18,7 @@ Run: passed.
 make test        # pytest, all of tests/
 ```
 
-Run: passed. These use Moto's `ThreadedMotoServer` as an in-process AWS emulator, DuckDB files in temporary folders, and FastAPI's test client. On 2026-11-17: 171 passed and 2 skipped in 81.53 s (measured (host CPU), one run, `results/test_run.txt`). The 2 skipped tests only run on a machine without Docker.
+Run: passed. These use Moto's `ThreadedMotoServer` as an in-process AWS emulator, DuckDB files in temporary folders, and FastAPI's test client. On 2026-11-17: 176 passed and 2 skipped in 78.70 s (measured (host CPU), one run, `results/test_run.txt`). The 2 skipped tests only run on a machine without Docker.
 
 | File | What it covers |
 | --- | --- |
@@ -32,7 +32,7 @@ Run: passed. These use Moto's `ThreadedMotoServer` as an in-process AWS emulator
 | `tests/test_metrics.py`, `tests/test_observability.py` | `/metrics` content; dashboard JSON; every dashboard metric is exposed; the two fixed panel definitions (D39) |
 | `tests/test_forecast.py` | baselines, evaluation, endpoint |
 | `tests/test_demo.py` | `demo-bad` exits non-zero in-process; scripts refuse cleanly without Docker; the smoke check counts readings in the bucket and waits for all of them |
-| `tests/test_site.py` | export schema, labels, limits; page served over HTTP; `app.js` rendered against a fake DOM (needs Node) |
+| `tests/test_site.py` | export schema, labels, limits; page served over HTTP, hero image included; `app.js` rendered against a fake DOM (needs Node); image paths in the README and the page resolve to files; one alt text for the hero; the desktop grid places every section |
 | `tests/test_pages_build.py` | real-data gate, fallbacks and warnings (fake HTTP client); workflow permissions and pins |
 
 ## 3. Terraform

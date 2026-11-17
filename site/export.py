@@ -24,6 +24,8 @@ sys.path.insert(0, str(ROOT))
 from forecast import baselines, evaluate, store  # noqa: E402
 
 MAX_BYTES = 2 * 1024 * 1024
+# Images the page loads from data/, copied from docs/media/ so there is one source file.
+MEDIA_FILES = ("architecture.svg", "hero-isometric.svg")
 WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 ATTRIBUTION = {
     "real": [
@@ -195,9 +197,10 @@ def export(db_path: str, out_dir: Path, now: datetime | None = None) -> Path:
     out_dir.mkdir(parents=True, exist_ok=True)
     path = out_dir / "summary.json"
     path.write_text(text + "\n")
-    diagram = ROOT / "docs" / "media" / "architecture.svg"
-    if diagram.exists():
-        shutil.copyfile(diagram, out_dir / "architecture.svg")
+    for name in MEDIA_FILES:
+        source = ROOT / "docs" / "media" / name
+        if source.exists():
+            shutil.copyfile(source, out_dir / name)
     return path
 
 

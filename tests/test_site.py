@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -196,6 +197,9 @@ def test_page_and_summary_are_served_and_the_page_names_its_parts(served):
     data = httpx.get(base + "/data/summary.json").json()
     assert data["data_label"] == "synthetic"
     assert httpx.get(base + "/data/architecture.svg").status_code == 200
+    hero = httpx.get(base + "/data/hero-isometric.svg")
+    assert hero.status_code == 200
+    assert hero.headers["content-type"].startswith("image/svg+xml")
     assert httpx.get(base + "/app.js").status_code == 200
 
 
@@ -224,3 +228,78 @@ def test_duckdb_connection_is_closed_after_export(warehouse):
     # export() must not leave the warehouse locked for the next writer
     con = duckdb.connect(warehouse)
     con.close()
+
+
+# ---- images in the README and on the page ---------------------------------------------------
+
+HERO_ALT = (
+    "Isometric city feeding a pipeline of eight stages (replay, API, queue, worker, raw bucket, "
+    "DuckDB and dbt, checks, forecast) that ends at a dashboard."
+)
+MD_IMAGE = re.compile(r"!\[([^\]]*)\]\(([^)\s]+)\)")
+IMG_TAG = re.compile(r"<img\b[^>]*>")
+
+
+def _attr(tag: str, name: str) -> str:
+    match = re.search(rf'\b{name}="([^"]*)"', tag)
+    assert match, f"{name} missing in {tag}"
+    return match.group(1)
+
+
+def _readme_images() -> list[tuple[str, str]]:
+    text = (ROOT / "README.md").read_text()
+    found = MD_IMAGE.findall(text)
+    found += [(_attr(t, "alt"), _attr(t, "src")) for t in IMG_TAG.findall(text)]
+    return [(alt, src) for alt, src in found if not src.startswith(("http://", "https://"))]
+
+
+def _page_images() -> list[tuple[str, str]]:
+    tags = IMG_TAG.findall((SITE / "index.html").read_text())
+    return [(_attr(t, "alt"), _attr(t, "src")) for t in tags]
+
+
+def test_readme_image_paths_resolve_to_files():
+    images = _readme_images()
+    assert images
+    for _, src in images:
+        assert (ROOT / src).is_file(), f"README image {src} does not exist"
+
+
+def test_page_image_paths_resolve_to_files():
+    """data/ is written by site/export.py, which copies these images from docs/media/."""
+    images = _page_images()
+    assert images
+    for _, src in images:
+        if src.startswith("data/"):
+            name = src.removeprefix("data/")
+            assert name in export.MEDIA_FILES, f"{src} is not copied by site/export.py"
+            assert (ROOT / "docs" / "media" / name).is_file(), f"docs/media/{name} is missing"
+        else:
+            assert (SITE / src).is_file(), f"page image {src} does not exist"
+
+
+def test_hero_uses_one_file_and_one_alt_text_in_readme_and_page():
+    readme = {src: alt for alt, src in _readme_images()}
+    page = {src: alt for alt, src in _page_images()}
+    assert readme["docs/media/hero-isometric.svg"] == HERO_ALT
+    assert page["data/hero-isometric.svg"] == HERO_ALT
+    assert (ROOT / "docs/media/hero-isometric.svg").stat().st_size < 2 * 1024 * 1024
+
+
+def test_every_media_file_is_copied_next_to_the_summary(warehouse, tmp_path):
+    export.export(warehouse, tmp_path)
+    for name in export.MEDIA_FILES:
+        copied = tmp_path / name
+        assert copied.read_bytes() == (ROOT / "docs" / "media" / name).read_bytes()
+
+
+def test_desktop_layout_places_every_section_and_keeps_one_column_below_it():
+    css = (SITE / "style.css").read_text()
+    html = (SITE / "index.html").read_text()
+    match = re.search(r"@media \(min-width: (\d+)px\) \{(.*?)\n\}", css, re.S)
+    assert match, "no desktop media query in site/style.css"
+    assert int(match.group(1)) >= 900  # phones and small tablets keep the single column
+    desktop = match.group(2)
+    areas = set(re.findall(r"main > \.(s-[a-z]+) \{ grid-area: [a-z]+; \}", desktop))
+    sections = set(re.findall(r'<section class="(s-[a-z]+)"', html))
+    assert sections and areas == sections

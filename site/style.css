@@ -48,4 +48,35 @@ select { font: inherit; padding: .2rem; background: var(--card); color: var(--fg
 a { color: var(--accent); }
 footer { padding-bottom: 2rem; color: var(--muted); font-size: .85rem; }
 img { max-width: 100%; height: auto; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
+.hero { display: block; width: 100%; margin: .5rem 0 1rem; border: 0; background: none; }
 @media (max-width: 600px) { h1 { font-size: 1.3rem; } }
+/* Desktop: title beside the illustration; the two list-like sections side by side; wide charts
+   keep the full width so their labels do not shrink. Below 1100px the single column stays. */
+@media (min-width: 1100px) {
+  header, main, footer { max-width: 1200px; padding: 0 32px; }
+  header {
+    display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    column-gap: 2.5rem; align-items: center; margin: 1.5rem auto 1rem;
+  }
+  header h1 { grid-column: 1; grid-row: 1; align-self: end; font-size: 2rem; margin-top: 0; }
+  header .lede { grid-column: 1; grid-row: 2; align-self: start; font-size: 1.05rem; }
+  header .hero { grid-column: 2; grid-row: 1 / span 2; margin: 0; }
+  main {
+    display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); column-gap: 2.5rem;
+    align-items: start;
+    grid-template-areas:
+      "banner banner"
+      "busiest completeness"
+      "heat heat"
+      "forecast forecast"
+      "map map"
+      "how how";
+  }
+  main > .banner { grid-area: banner; margin-bottom: .5rem; }
+  main > .s-busiest { grid-area: busiest; }
+  main > .s-completeness { grid-area: completeness; }
+  main > .s-heat { grid-area: heat; }
+  main > .s-forecast { grid-area: forecast; }
+  main > .s-map { grid-area: map; }
+  main > .s-how { grid-area: how; }
+}
