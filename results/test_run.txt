@@ -1,11 +1,11 @@
 Command: make setup, make lint, then .venv/bin/pytest (the command make test runs; the -rs run that printed the skip reason gave the same skips)
 Machine: macOS arm64, Apple M3, Python 3.13.5, host machine, Docker running
-Date: 2026-11-17, after Stage 5 (real file layout, Melbourne time, 127.0.0.1 API URLs, completeness share rule)
+Date: 2026-11-17, after the Stage 5 changes and the Pages month choice (D48)
 Label: measured (host CPU), one run
 
 make setup: exit 0 (existing .venv, pinned requirements/direct.txt with requirements/constraints.txt)
 make lint:  ruff check: All checks passed! / ruff format --check: 61 files already formatted
-pytest:     187 passed, 2 skipped, 1 warning in 79.22s (0:01:19)
+pytest:     190 passed, 2 skipped, 1 warning in 84.72s (0:01:24)
 
 Skipped: tests/test_demo.py:63 (2 tests), "only meaningful without Docker". Docker is installed on this machine.
 Warning: StarletteDeprecationWarning from fastapi.testclient (httpx with starlette.testclient).

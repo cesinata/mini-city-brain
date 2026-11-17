@@ -85,6 +85,10 @@ Nothing downstream of a failed check was built.
 
 That block is from `make demo-bad` against the Docker stack on my laptop on 2026-11-17, started from an empty stack (`results/demo_bad_run.txt`). Each request had 76 readings accepted and 1 rejected for `volume`. The data is synthetic, so the numbers are `simulated`. Details in [docs/demo.md](docs/demo.md).
 
+The same failure in the Dagster UI: the `duplicate_rate` check fails on `raw_objects_loaded`, and dbt and everything after it is not executed.
+
+![Dagster run page for a failed mcb_pipeline run: the raw_objects_loaded duplicate_rate step is red, and mcb_dbt, the completeness check and pipeline_last_success are listed as not executed.](docs/media/dagster-demo-bad-run.png)
+
 ## Quick start
 
 Needs Docker, Python 3.13 and `make`.
@@ -104,7 +108,7 @@ make site         # writes site/data/summary.json
 python -m http.server --directory site 8000
 ```
 
-Other targets: `make up`, `make down`, `make replay`, `make dagster-ui` (Dagster UI on port 3001), `make preflight`. The API listens on `http://localhost:8000` (docs at `/docs`).
+Other targets: `make up`, `make down`, `make replay`, `make dagster-ui` (Dagster UI on port 3001), `make preflight`. The API listens on `http://127.0.0.1:8000` (docs at `/docs`).
 
 Grafana (profile `obs`) allows anonymous access as a read-only viewer, bound to `127.0.0.1` only. The admin login is `admin` / `admin`, for local use only. Do not expose these ports.
 
@@ -134,12 +138,12 @@ site/               static demo page, exporter, JSON schema
 observability/      Prometheus config, Grafana provisioning and dashboard
 scripts/            demo, preflight and helper scripts
 tests/              pytest suites and a small synthetic fixture
-docs/               data, decisions, third-party, testing, demo, AI log
+docs/               data, decisions, third-party, testing, demo, media
 ```
 
 ## Data and licence
 
-Source: Department of Transport and Planning (Victoria), Traffic Signal Volume Data, listed as CC BY 4.0. I confirm this on the publisher's page before I use real data. Columns, assumptions and attribution text are in [docs/data.md](docs/data.md). Every choice made during the rebuild is in [docs/decisions.md](docs/decisions.md), and every dependency with its licence is in [docs/third-party.md](docs/third-party.md).
+Source: Department of Transport and Planning (Victoria), Traffic Signal Volume Data, licensed under CC BY 4.0. I checked the licence on the publisher's page on 2026-11-17, before using real data. Columns, assumptions and attribution text are in [docs/data.md](docs/data.md). Every choice made during the rebuild is in [docs/decisions.md](docs/decisions.md), and every dependency with its licence is in [docs/third-party.md](docs/third-party.md).
 
 Attribution text for real data: "Contains Traffic Signal Volume Data from the Department of Transport and Planning (Victoria), licensed under CC BY 4.0."
 
@@ -148,10 +152,10 @@ Attribution text for real data: "Contains Traffic Signal Volume Data from the De
 - One real month has been loaded (October 2026). It showed that missing intervals are `-1` and that the 96 intervals follow Melbourne clock time with daylight saving, and the reader now reads them that way (decisions D43). The day clocks go back in April has not been checked.
 - Real detectors break. In that month 53 of 16,532 detector-days (0.32%) at the 20 sites had fewer than 90% of their intervals, 31 of them from one detector that reports about half the day all month (`measured (host CPU)`, `results/real_completeness_breakdown.txt`). The completeness check now fails a run only when more than 1% of detector-days are incomplete, and prints the incomplete ones as a warning (decisions D45). With the old rule, that one detector failed every real run.
 - No real cloud deployment, no Kubernetes, no Spark.
-- The Docker stack has run on one machine only (macOS on Apple M3, 2026-11-17): `make demo`, `make demo-bad`, the Terraform `init` container, Prometheus and Grafana, all on synthetic data (`results/demo_run.txt`, `results/stack_checks.txt`). CI runs the compose smoke test on Linux and passed on 2026-11-16.
+- The Docker stack has run on one machine only (macOS on Apple M3, 2026-11-17): `make demo`, `make demo-bad`, the Terraform `init` container, Prometheus and Grafana on synthetic data (`results/demo_run.txt`, `results/stack_checks.txt`), and the real October month (`results/real_replay.txt`, `results/real_pipeline.txt`). CI runs the compose smoke test on Linux on every push.
 - The demo has only 2 days of history, so the forecast endpoint answers but both baselines return `null`: they need at least one earlier week.
 - I looked at the Grafana dashboard, the Dagster UI and the API docs on 2026-11-17. That check found two broken Grafana panels (time since last success, rejection-rate axis), which are now fixed (decisions D39). The ingest-rate panel stays flat in `make demo`, because the replay finishes in about a second, faster than Prometheus can see a rate.
-- The demo page has not been opened in a browser. No map is shown, because no site-locations file has been joined.
+- No map is shown, because no site-locations file has been joined (decisions D12).
 - The reading schema carries no alarm field, so detector health uses missing intervals only.
 - Forecasts are two simple baselines, not a trained model.
 

@@ -2,7 +2,7 @@
 
 Each entry has an ID, date, choice, reason and how to revert. New entries go at the bottom. "Owner to confirm" means the choice is a default until the owner signs it off.
 
-## D1. Rebuild in place, keep the name (2026-11-10, owner to confirm)
+## D1. Rebuild in place, keep the name (2026-11-10, confirmed by the owner 2026-11-17)
 
 - **Choice:** Keep `mini-city-brain`. Replace the single-file prototype (`main.py`, `main.tf`) with the layout in `CLAUDE.md`.
 - **Reason:** The old prototype writes each POSTed record to a bucket and nothing reads it back. There are no tests, no CI and no data source.
@@ -29,7 +29,7 @@ Each entry has an ID, date, choice, reason and how to revert. New entries go at 
 - **Trade-off:** Airflow is the more common name in job ads.
 - **Revert:** The pipeline steps are plain Python functions, so they can be wrapped in Airflow later.
 
-## D5. Data: Victorian traffic-signal volume (SCATS) (2026-11-10, owner to confirm licence)
+## D5. Data: Victorian traffic-signal volume (SCATS) (2026-11-10, licence confirmed by the owner 2026-11-17: CC BY 4.0)
 
 - **Choice:** Primary source is the Department of Transport and Planning "Traffic Signal Volume Data" (15-minute volumes per detector).
 - **Data rules:**
@@ -56,7 +56,7 @@ Each entry has an ID, date, choice, reason and how to revert. New entries go at 
   - A real Terraform deploy is a separate, optional step with a billing alert and `terraform destroy`.
   - Kubernetes could later be added locally with kind.
 
-## D9. Licence: MIT (2026-11-10, owner to confirm)
+## D9. Licence: MIT (2026-11-10, confirmed by the owner 2026-11-17)
 
 - **Choice:** Replace `LICENSE.txt` (which held the Terraform BSL text, not a licence for this code) with an MIT `LICENSE` naming the owner.
 - **Revert:** Swap in another licence file.
@@ -72,7 +72,7 @@ Each entry has an ID, date, choice, reason and how to revert. New entries go at 
 - **Reason:** A pipeline has no camera moment. A page anyone can open, plus a demo that breaks on purpose (`make demo-bad`), shows what the system produces and how it protects data quality. It needs no server and costs nothing.
 - **Revert:** Disable Pages; the rest of the repo is unaffected.
 
-## D12. Site locations and the map (2026-11-10, owner to confirm licence)
+## D12. Site locations and the map (2026-11-10, not in use: no map is built; the locations dataset's licence has not been read)
 
 - **Choice:** Join SCATS site IDs to a Department of Transport and Planning traffic-signal locations dataset (see `docs/data.md`). Show the map only if at least 80% of the shown sites match.
 - **Reason:** It has not been checked that the location dataset's site number is the same ID as the volume data's SCATS site.
@@ -144,7 +144,7 @@ Each entry has an ID, date, choice, reason and how to revert. New entries go at 
 - **Reason:** The repo is inside a OneDrive folder. Importing packages from `.venv` there blocked on file reads (no progress after 100 seconds). The same pinned requirements installed cleanly outside OneDrive and the tests ran in seconds.
 - **Owner action:** Keep the repo outside OneDrive, or mark the folder "Always keep on this device".
 
-## D24. SCATS time zone: fixed UTC+10 by default (2026-11-10, owner to confirm)
+## D24. SCATS time zone: fixed UTC+10 by default (2026-11-10, replaced by D43 after the first real file)
 
 - **Choice:** `QT_INTERVAL_COUNT` and the `V00` to `V95` intervals are read as "Australian Eastern Standard Time" literally, a fixed UTC+10 offset with no daylight saving. `interval_end` is stored in UTC. `V00` ends at 00:15 local, `V95` ends at the next local midnight. `--tz Australia/Melbourne` reads them as local clock time instead.
 - **Reason:** That is what the data dictionary says. No real file has been seen on this machine. If the publisher actually uses Melbourne local time, summer data is one hour off until the setting is changed.
@@ -325,9 +325,23 @@ Each entry has an ID, date, choice, reason and how to revert. New entries go at 
 - **Check:** `tests/test_orchestration.py` (strict default, warning below the limit, failure above it, the warning in the run summary) and `tests/test_warehouse_dbt.py` (1 of 200 incomplete detector-days passes, 3 of 200 fail).
 - **Revert:** set `max_incomplete_share` to 0.
 
-## D46. Pages and README screenshots before the AI-log review (2026-11-17, owner's request)
+## D46. Pages and README screenshots (2026-11-17, owner's request)
 
-- **Choice:** The GitHub Pages step and the README screenshots come before the AI-log and truth-pass step, because the owner needs the repo in a portfolio now. The screenshots were taken with headless Chrome (a throwaway browser profile, no browser bar) after replaying the real October 2026 month: the demo page built from that month, the Grafana dashboard during the replay, and the Dagster asset graph after a run recorded in the local `dagster_home/`.
-- **Consequences:** `docs/ai-log.md` is still uncommitted and holds `DRAFT` entries, so the README's link to it does not resolve on GitHub until the owner confirms and commits it. The demo GIF is not made.
+- **Choice:** The GitHub Pages step and the README screenshots come earlier than planned, because the owner needs the repo in a portfolio now. The screenshots were taken with headless Chrome (a throwaway browser profile, no browser bar) after replaying the real October 2026 month: the demo page built from that month, the Grafana dashboard during the replay, and the Dagster asset graph after a run recorded in the local `dagster_home/`.
+- **Consequences:** The demo GIF is not made.
 - **Revert:** Not applicable.
 - **Update (2026-11-17):** the owner enabled Pages and ran the workflow on `main`; it passed and the page is live at https://cesinata.github.io/mini-city-brain/ with synthetic data. The README links to it. The banner text is now 14 px, and `docs/media/architecture.svg` was redrawn so every label fits its box and no arrows cross.
+
+## D47. GitHub Actions moved to versions that run on Node.js 24 (2026-11-17)
+
+- **Choice:** `actions/checkout` v5.1.0, `actions/setup-python` v6.3.0, `hashicorp/setup-terraform` v4.0.1, `actions/configure-pages` v6.0.0, `actions/upload-pages-artifact` v5.0.0, `actions/deploy-pages` v5.0.1. Each is the oldest major version whose `action.yml` runs on Node.js 24, at its newest patch release; each was released more than 14 days ago (looked up on GitHub on 2026-11-17, `docs/third-party.md`).
+- **Reason:** CI annotated every job with "Node.js 20 is deprecated" for the old pins, which GitHub forced onto Node.js 24 anyway. The inputs the workflows use (`python-version`, `terraform_version`, `path`) exist in the new versions.
+- **Not verified:** the new versions in CI and in the Pages workflow; the first runs after this change show it.
+- **Revert:** Put the old tags back in `.github/workflows/ci.yml` and `pages.yml`.
+
+## D48. The Pages build uses the newest complete month (2026-11-17)
+
+- **Choice:** With `REAL_DATA_ENABLED` set, `scripts/pages_build.py` reads the month from each ZIP resource's name or URL (month name and year, as in `traffic_signal_volume_data_october_2026.zip`, or `YYYY-MM`) and picks the newest month that has ended in Melbourne time. If no month can be read, it falls back to the newest file by `last_modified`, as before. The job summary lists the file used.
+- **Reason:** The publisher updates the current month's file daily, so on 17 November it held about half a month (68 MB against 141 MB for October). A partial month gives a shorter forecast history and may end with a part day that the completeness check would flag; October also matches the README's numbers and screenshots.
+- **Not verified:** the publisher's CKAN API has not been called from this repo yet, so the resource names it returns are an assumption (D30). The first real-data run's job summary shows which file was picked.
+- **Revert:** Return the old `max(... last_modified ...)` in `latest_zip_resource`.

@@ -16,13 +16,15 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import os
+import re
 import sys
 import tempfile
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any, Protocol
+from zoneinfo import ZoneInfo
 
 import duckdb
 import httpx
@@ -63,20 +65,54 @@ class RealHttp:
         return dest
 
 
-def latest_zip_resource(package: dict[str, Any]) -> dict[str, Any]:
-    """The newest monthly ZIP among a CKAN package's resources."""
+MONTHS = {
+    name: number
+    for number, names in enumerate(
+        [("jan", "january"), ("feb", "february"), ("mar", "march"), ("apr", "april"),
+         ("may",), ("jun", "june"), ("jul", "july"), ("aug", "august"),
+         ("sep", "sept", "september"), ("oct", "october"), ("nov", "november"),
+         ("dec", "december")],
+        start=1,
+    )
+    for name in names
+}  # fmt: skip
+MONTH_NAME_YEAR = re.compile(r"(?<![a-z])([a-z]{3,9})[\s_-]*(20\d\d)(?!\d)")
+YEAR_MONTH = re.compile(r"(?<!\d)(20\d\d)[-_]?(0[1-9]|1[0-2])(?!\d)")
+
+
+def resource_month(resource: dict[str, Any]) -> tuple[int, int] | None:
+    """(year, month) from a resource's name or URL, for example "october_2026" or "2026-10"."""
+    text = f"{resource.get('name', '')} {resource.get('url', '')}".lower()
+    for word, year in MONTH_NAME_YEAR.findall(text):
+        if word in MONTHS:
+            return int(year), MONTHS[word]
+    match = YEAR_MONTH.search(text)
+    return (int(match.group(1)), int(match.group(2))) if match else None
+
+
+def latest_zip_resource(package: dict[str, Any], today: date | None = None) -> dict[str, Any]:
+    """The newest monthly ZIP whose month has ended; otherwise the newest ZIP.
+
+    The current month's file is still being filled in (the publisher updates it daily), so a
+    complete earlier month is preferred when the month can be read from the name or URL
+    (decisions D48). `today` is the Melbourne date; it defaults to now.
+    """
     resources = package["result"]["resources"]
     zips = [r for r in resources if str(r.get("url", "")).lower().endswith(".zip")]
     if not zips:
         raise LookupError("the dataset lists no ZIP resources")
+    today = today or datetime.now(ZoneInfo(scats.DEFAULT_TZ)).date()
+    ended = [r for r in zips if (m := resource_month(r)) and m < (today.year, today.month)]
+    if ended:
+        return max(ended, key=lambda r: (resource_month(r), r.get("last_modified") or ""))
     return max(
         zips, key=lambda r: (r.get("last_modified") or r.get("created") or "", r.get("name", ""))
     )
 
 
-def fetch_latest(dest_dir: Path, http: Http) -> Path:
+def fetch_latest(dest_dir: Path, http: Http) -> tuple[Path, dict[str, Any]]:
     resource = latest_zip_resource(http.get_json(PACKAGE_URL))
-    return http.download(resource["url"], dest_dir / "scats_latest.zip")
+    return http.download(resource["url"], dest_dir / "scats_latest.zip"), resource
 
 
 def load_top_sites(source: Path, db_path: str, top_n: int = TOP_SITES) -> dict[str, int]:
@@ -149,7 +185,8 @@ def build(
     if real_enabled:
         try:
             with tempfile.TemporaryDirectory() as tmp:
-                source = fetch_latest(Path(tmp), http or RealHttp())
+                source, resource = fetch_latest(Path(tmp), http or RealHttp())
+                result.detail["file"] = resource.get("name") or resource.get("url")
                 result.detail["load"] = load_top_sites(source, db_path)
             run = _run_pipeline(db_path, "existing", workdir, _data_end(db_path))
             if run.success:
